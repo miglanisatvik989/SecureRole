@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 from app.models import AccessLog, db
 
 
-def stage_access_log(session, *, actor_id, action, resource, allowed):
+def stage_access_log(session, *, actor_id, action, resource, allowed, actor_role=None):
     """Stage an event in the caller's transaction. Use policy-defined labels."""
     session.add(AccessLog(
         actor_user_id=actor_id,
+        actor_role=actor_role,
         action=action,
         resource=resource,
         decision="Allowed" if allowed else "Denied",

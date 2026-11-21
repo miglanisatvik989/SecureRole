@@ -1,0 +1,31 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Active sessions" %}
+{% block workspace %}
+<header class="workspace-heading">
+    {{ page_heading(page_title, "Review and sign out sessions for your account.") }}
+    <form method="post" action="{{ url_for('sessions.revoke_all') }}">
+        {{ logout_form.csrf_token(id="sessions-all-csrf") }}
+        <button class="button secondary" type="submit">Sign out everywhere</button>
+    </form>
+</header>
+<section class="card content-card" aria-label="Active sessions">
+    {% if rows %}
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Active session list">
+        <table class="data-table">
+            <thead><tr><th scope="col">Session</th><th scope="col">Created (UTC)</th><th scope="col">Expires (UTC)</th><th scope="col">Action</th></tr></thead>
+            <tbody>{% for row in rows %}
+            <tr>
+                <td>{{ "Current session" if row.current else "Other session" }}</td>
+                <td><time class="technical" datetime="{{ utc(row.created_at).isoformat() }}">{{ utc(row.created_at).strftime("%Y-%m-%d %H:%M:%S") }}</time></td>
+                <td><time class="technical" datetime="{{ utc(row.expires_at).isoformat() }}">{{ utc(row.expires_at).strftime("%Y-%m-%d %H:%M:%S") }}</time></td>
+                <td><form method="post" action="{{ url_for('sessions.revoke_one', identity=row.id) }}">
+                    {{ logout_form.csrf_token(id="session-csrf-" ~ row.id) }}
+                    <button class="button secondary" type="submit" aria-label="Sign out {{ 'current' if row.current else 'other' }} session created {{ utc(row.created_at).strftime('%Y-%m-%d %H:%M:%S UTC') }}">Sign out session</button>
+                </form></td>
+            </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+    {% else %}<p class="empty-copy">There are no active sessions.</p>{% endif %}
+</section>
+{% endblock %}

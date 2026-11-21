@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_ui.html" import brand %}
+{% block title %}Audit integrity unavailable | SecureRole{% endblock %}
+{% block content %}
+<section class="card login-card" aria-labelledby="audit-title">
+    {{ brand() }}
+    <h1 id="audit-title">Audit integrity unavailable</h1>
+    <p class="intro">This action could not be completed because the audit journal could not be verified. Contact the application administrator.</p>
+</section>
+{% endblock %}

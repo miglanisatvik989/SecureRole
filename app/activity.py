@@ -4,6 +4,7 @@ from flask import Blueprint, request
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
+from app.audit_integrity import audit_key, inspect_audit
 from app.models import AccessLog, User, db
 from app.rbac import Action, require_permission
 from app.workspace import render_workspace
@@ -13,7 +14,7 @@ PAGE_SIZE = 20
 
 
 def recent_activity():
-    return db.session.scalars(db.select(AccessLog).options(joinedload(AccessLog.actor).joinedload(User.role))
+    return db.session.scalars(db.select(AccessLog).options(joinedload(AccessLog.actor))
                               .order_by(AccessLog.timestamp.desc(), AccessLog.id.desc()).limit(5)).all()
 
 
@@ -23,6 +24,9 @@ def index():
     latest = db.session.scalar(db.select(db.func.max(AccessLog.id))) or 0
     snapshot = min(latest, max(0, request.args.get("snapshot", latest, type=int)))
     require_permission(Action.VIEW_ACCESS_LOGS)
+    integrity = inspect_audit(db.engine, audit_key())
+    if not integrity.valid:
+        return render_workspace("activity.html", integrity=integrity, active="activity", status=503)
     decision = request.args.get("decision", "")
     if decision not in ("Allowed", "Denied"):
         decision = ""
@@ -33,7 +37,7 @@ def index():
         action = ""
     search = request.args.get("q", "").strip()[:100]
     statement = db.select(AccessLog).where(AccessLog.id <= snapshot).options(
-        joinedload(AccessLog.actor).joinedload(User.role)
+        joinedload(AccessLog.actor)
     )
     if decision:
         statement = statement.where(AccessLog.decision == decision)
@@ -55,4 +59,5 @@ def index():
                               .limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)).all()
     return render_workspace("activity.html", logs=logs, actions=actions, decision=decision,
                             action=action, search=search, page=page, last_page=last_page,
-                            total=total, snapshot=snapshot, active="activity")
+                            total=total, snapshot=snapshot, active="activity",
+                            integrity=integrity)

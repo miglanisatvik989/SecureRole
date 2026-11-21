@@ -7,6 +7,8 @@ Admin, Teacher and Student accounts. Phase 5 adds centralized authorization
 and audit logging using the existing database schema. Phase 6 adds the
 role dashboards, academic record management, account management and access logs.
 Phase 7 strengthens session and input security and verifies the PBL acceptance criteria.
+Phase 7.1 adds persistent throttling, server-side sessions, historical audit roles,
+database triggers and a verifiable audit chain.
 
 ## Setup and database initialization
 
@@ -16,14 +18,15 @@ Run these commands from the project root (Linux/macOS):
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+test -e .env || cp .env.example .env
 python -c 'import secrets; print(secrets.token_hex(32))'
 ```
 
-Put the generated value in `.env` as `SECRET_KEY=your-generated-value`. Existing
-shell environment variables take precedence over `.env`. The factory reports a
-clear error if no secret is configured. `.env`, `.venv`, `instance/`, and SQLite
-database files are ignored by Git; `.env.example` contains no real secret.
+Put the generated value in `.env` as `SECRET_KEY`. Run the generator again
+and set the different value as `AUDIT_INTEGRITY_KEY`. Keep both independent
+random values private. Existing shell environment variables take precedence
+over `.env`. The factory rejects missing or placeholder keys. Git ignores
+`.env`, `.venv`, `instance/`, and SQLite database files.
 
 ```bash
 # Create the four tables without adding demonstration data:
@@ -42,9 +45,26 @@ SQLite URI resolves through Flask's instance directory to
 foreign-key enforcement is enabled on every SQLAlchemy connection. Open
 `http://127.0.0.1:5000/` to reach the sign-in page.
 
-`create_all()` creates missing tables; it does **not** migrate old schemas. If a
-previous database has a different schema, retain a backup and migrate it before
-using this implementation. Do not delete an existing database to initialize it.
+### Upgrading an existing database
+
+Stop the running application before upgrading. Back up the database and retain
+the audit key separately in protected storage. The backup destination must be
+a new file.
+
+```bash
+flask --app run backup-db instance/securerole.phase7-backup.db
+flask --app run migrate-db
+flask --app run verify-audit
+```
+
+The first migration moves the Phase 7 schema from SQLite `user_version` 0 to
+1, preserves original rows, installs integrity triggers and signs existing
+audit rows as a migration baseline. Re-running it is safe with the matching
+key. `init-db` and `seed-db` use the same migration path. If an upgrade fails,
+keep the backup and resolve the reported issue before retrying. To roll back
+after a successful upgrade, stop the app and restore the backup together with
+the corresponding app version. Store backups in a protected location and
+exclude them from Git.
 
 ## Demonstration data
 
@@ -97,10 +117,20 @@ serving over HTTPS so the browser sends the session cookie only over HTTPS.
 For a hosted instance, also set `TRUSTED_HOSTS` to its allowed hostnames, separated
 by commas. Use a unique random secret and a production WSGI server for hosted use.
 
-Sessions expire eight hours after sign-in. Password resets invalidate the
-account's previous sessions when they are next checked. Existing browser
-sessions from before Phase 7 require a fresh sign-in. The demo accounts
-and their passwords are unchanged.
+Sessions expire eight hours after sign-in. **Active sessions** lets you sign out
+a single session or all sessions for your account. A password reset revokes all
+prior sessions, and the Phase 7.1 upgrade requires a fresh sign-in. Demo
+accounts and passwords are preserved. The session cookie holds a random
+token and SQLite stores a SHA-256 digest rather than the token itself.
+
+Valid sign-in form submissions reserve a slot before password checking. The
+default fixed window is 60 seconds, with 10 attempts per source address and
+5 attempts per source-address-and-username pair. Set positive integers in
+`LOGIN_WINDOW_SECONDS`, `LOGIN_SOURCE_LIMIT`, and `LOGIN_ACCOUNT_LIMIT` to tune
+these defaults. Both successful and failed attempts count. A blocked attempt
+receives HTTP 429 and `Retry-After` and does not extend the window. Counters
+survive restarts on the same database and signing key. Expired counters are
+removed during later sign-in attempts.
 
 ## Authorization and access logs
 
@@ -157,11 +187,15 @@ See the [authorization architecture and workflow](docs/authorization.md).
   Each page shows up to 20 decisions. Pagination holds the results steady while
   new audit entries arrive. Reapply a filter to refresh the results.
 
-The app retains account and audit history and provides no account deletion
-workflow. Log roles reflect the actor's current account role. Audit rows are
-not tamper-evident. Admin password resets revoke previous authentications.
-There is no email or self-service reset. SQLite serializes writes and is
-intended for the scale of this simulator.
+The app retains account and audit history without an account deletion workflow.
+Activity shows historical roles for new entries, **Unknown** for legacy
+authenticated entries, and **Anonymous** when there is no actor. The admin
+activity page checks the local audit chain. Store a verified checkpoint
+reported by `verify-audit` in trusted storage outside the database and use
+`flask --app run verify-audit --checkpoint ID:MAC` to detect rollback past it.
+Local verification depends on the dedicated audit key and trusted integrity
+state. There is no email or self-service reset. SQLite is intended for the
+scale of this simulator.
 
 ## Database design
 
@@ -180,12 +214,12 @@ records. The full graph is checked because this is a small teaching simulator.
 Validation raises `ValueError`; database constraints raise `IntegrityError`.
 Call `db.session.rollback()` after either kind of failed write.
 
-SQLite itself enforces required columns, unique values, foreign keys, supported
-role names, marks bounds and log decisions. Cross-table role rules are enforced
-by the ORM validation hook: use model instances for application writes. Bulk SQL
-and external SQLite tools bypass that hook and must not be used to change roles,
-record ownership or teacher assignments. Referenced rows cannot be deleted until
-their references are explicitly handled; no delete cascades are configured.
+SQLite enforces required columns, uniqueness, foreign keys and marks bounds.
+Version 1 triggers enforce Student record ownership, Teacher assignments,
+dependent role changes, last-Admin preservation after bootstrap, password
+reset revocation and append-only audit writes. ORM validation remains in
+place for friendly errors. External SQLite clients should enable foreign
+keys and preserve the installed schema and triggers.
 
 Timestamps default to the current UTC time. The custom `UTCDateTime` type stores
 UTC in SQLite and restores an aware UTC datetime when reading it; explicit

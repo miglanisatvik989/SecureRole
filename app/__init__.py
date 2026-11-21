@@ -1,7 +1,7 @@
 from pathlib import Path
+from secrets import token_hex
 
-import click
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
@@ -23,6 +23,16 @@ def create_app(test_config=None):
     if not app.secret_key or app.secret_key == "replace-with-a-random-secret":
         raise RuntimeError("Set SECRET_KEY in the environment or project .env file.")
 
+    if app.testing and not (test_config or {}).get("AUDIT_INTEGRITY_KEY"):
+        app.config["AUDIT_INTEGRITY_KEY"] = token_hex(32)
+    audit_key = app.config.get("AUDIT_INTEGRITY_KEY")
+    if (not isinstance(audit_key, str) or len(audit_key) < 32
+            or audit_key == "replace-with-an-independent-audit-secret" or audit_key == app.secret_key):
+        raise RuntimeError("Set an independent random AUDIT_INTEGRITY_KEY of at least 32 characters.")
+    for name in ("LOGIN_SOURCE_LIMIT", "LOGIN_ACCOUNT_LIMIT", "LOGIN_WINDOW_SECONDS"):
+        if type(app.config[name]) is not int or app.config[name] <= 0:
+            raise ValueError(f"{name} must be a positive integer.")
+
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
@@ -34,6 +44,9 @@ def create_app(test_config=None):
     from app.accounts import accounts
     from app.activity import activity
     from app.auth import auth, handle_csrf_error
+    from app.audit_integrity import AuditIntegrityError
+    from app.migrations import register_database_commands
+    from app.session_security import sessions
     from app.records import records
     from app.routes import access_restricted, main
 
@@ -42,8 +55,13 @@ def create_app(test_config=None):
     app.register_blueprint(records)
     app.register_blueprint(accounts)
     app.register_blueprint(activity)
+    app.register_blueprint(sessions)
     app.register_error_handler(CSRFError, handle_csrf_error)
     app.register_error_handler(403, access_restricted)
+
+    @app.errorhandler(AuditIntegrityError)
+    def audit_unavailable(error):
+        return render_template("audit_unavailable.html"), 503
 
     @app.after_request
     def protect_response(response):
@@ -56,7 +74,7 @@ def create_app(test_config=None):
         # Flask-WTF checks the same-origin Referer on secure form submissions.
         response.headers["Referrer-Policy"] = "same-origin"
         # These pages contain a CSRF token or account-specific information.
-        if request.blueprint in {"auth", "main", "records", "accounts", "activity"}:
+        if request.blueprint in {"auth", "main", "records", "accounts", "activity", "sessions"}:
             response.cache_control.no_store = True
         return response
 
@@ -69,11 +87,7 @@ def create_app(test_config=None):
         except (TypeError, ValueError):
             return None
 
-    @app.cli.command("init-db")
-    def init_db():
-        """Create missing database tables without deleting existing data."""
-        db.create_all()
-        click.echo("Database tables initialized.")
+    register_database_commands(app)
 
     from app.seed import register_seed_command
     register_seed_command(app)

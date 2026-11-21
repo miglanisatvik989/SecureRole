@@ -1,6 +1,7 @@
 import pytest
 
 from app import create_app
+from app.migrations import migrate_database
 from app.models import db
 
 
@@ -12,7 +13,7 @@ def app(tmp_path):
         "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'test.db'}",
     })
     with application.app_context():
-        db.create_all()
+        migrate_database()
         yield application
         db.session.remove()
         db.engine.dispose()

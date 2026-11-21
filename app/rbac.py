@@ -3,9 +3,10 @@
 from flask import abort, current_app
 from flask_login import current_user
 from sqlalchemy import and_, false, or_
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import Session, aliased
 
 from app.audit import commit_access_log, stage_access_log
+from app.audit_integrity import stored_role
 from app.models import Role, StudentRecord, SUPPORTED_ROLES, User, db
 
 
@@ -44,7 +45,7 @@ def _valid_id(value):
 def _student_ids(actor_id, action):
     """Select eligible Student IDs using the stored role and assignment in SQL."""
     statement = db.select(User.id).where(User.role.has(Role.name == "Student"))
-    if not _valid_id(actor_id) or action not in _RECORD_SCOPES:
+    if not _valid_id(actor_id) or not isinstance(action, str) or action not in _RECORD_SCOPES:
         return statement.where(false())
 
     actor = aliased(User)
@@ -80,22 +81,27 @@ def scoped_records(actor_id, action=Action.VIEW_RECORD):
 
 def is_allowed(actor_id, action, *, record_id=None, student_id=None, dashboard_role=None):
     """Check stored state. Creation takes a student ID and other record actions take a record ID."""
+    return _is_allowed(db.session, actor_id, action, record_id=record_id,
+                       student_id=student_id, dashboard_role=dashboard_role)
+
+
+def _is_allowed(session, actor_id, action, *, record_id=None, student_id=None, dashboard_role=None):
     if not _valid_id(actor_id) or not isinstance(action, str):
         return False
 
     # Pending edits cannot change the role or assignment used for the decision.
-    with db.session.no_autoflush:
+    with session.no_autoflush:
         if action == Action.CREATE_RECORD:
             if not _valid_id(student_id) or record_id is not None or dashboard_role is not None:
                 return False
             statement = _student_ids(actor_id, action).where(User.id == student_id)
-            return bool(db.session.scalar(db.select(statement.exists())))
+            return bool(session.scalar(db.select(statement.exists())))
 
         if action in _RECORD_SCOPES:
             if not _valid_id(record_id) or student_id is not None or dashboard_role is not None:
                 return False
             statement = scoped_records(actor_id, action).where(StudentRecord.id == record_id)
-            return bool(db.session.scalar(db.select(statement.exists())))
+            return bool(session.scalar(db.select(statement.exists())))
 
         if record_id is not None or student_id is not None:
             return False
@@ -114,7 +120,7 @@ def is_allowed(actor_id, action, *, record_id=None, student_id=None, dashboard_r
         statement = db.select(User.id).join(User.role).where(
             User.id == actor_id, Role.name.in_(roles)
         )
-        return bool(db.session.scalar(db.select(statement.exists())))
+        return bool(session.scalar(db.select(statement.exists())))
 
 
 def _audit_labels(action, *, record_id=None, student_id=None, dashboard_role=None):
@@ -137,19 +143,31 @@ def _audit_labels(action, *, record_id=None, student_id=None, dashboard_role=Non
 def require_permission(action, *, atomic=False, **target):
     """Guard a route before writes. When atomic, stage the allowed event for the caller to commit."""
     actor_id = current_user.id if current_user.is_authenticated else None
-    allowed = is_allowed(actor_id, action, **target)
-    action_label, resource = _audit_labels(action, **target)
-    event = dict(actor_id=actor_id, action=action_label, resource=resource, allowed=allowed)
-
-    if allowed and atomic:
-        stage_access_log(db.session, **event)
-    else:
-        if atomic:
-            # Release a Phase 6 write reservation before the independent denial insert.
+    if atomic:
+        event = decision(db.session, actor_id, action, target)
+        if event["allowed"]:
+            stage_access_log(db.session, **event)
+        else:
+            # Release a write reservation before the independent denial insert.
             db.session.rollback()
-        commit_access_log(**event)
+            commit_access_log(**event)
+    else:
+        # Read decisions and their historical role share the same SQLite snapshot
+        # and write reservation as the append.
+        with Session(db.engine) as session, session.begin():
+            session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+            event = decision(session, actor_id, action, target)
+            stage_access_log(session, **event)
 
     if actor_id is None:
         abort(current_app.login_manager.unauthorized())
-    if not allowed:
+    if not event["allowed"]:
         abort(403)
+
+
+def decision(session, actor_id, action, target):
+    allowed = _is_allowed(session, actor_id, action, **target)
+    action_label, resource = _audit_labels(action, **target)
+    actor_role = stored_role(session.connection(), actor_id) if actor_id is not None else None
+    return dict(actor_id=actor_id, action=action_label, resource=resource,
+                allowed=allowed, actor_role=actor_role)

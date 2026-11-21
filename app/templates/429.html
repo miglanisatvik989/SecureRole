@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_ui.html" import brand %}
+{% block title %}Try again later | SecureRole{% endblock %}
+{% block content %}
+<section class="card login-card" aria-labelledby="retry-title">
+    {{ brand() }}
+    <h1 id="retry-title">Try again later</h1>
+    <p class="intro" role="status">Too many sign-in attempts. Wait {{ retry }} {{ "second" if retry == 1 else "seconds" }} before trying again.</p>
+    <a class="button primary" href="{{ url_for('auth.login') }}">Back to sign in</a>
+</section>
+{% endblock %}

@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from app import create_app
+from app.migrations import migrate_database
 from app.models import Role, User, db
 
 
@@ -18,7 +19,7 @@ def auth_app(tmp_path):
         "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'auth.db'}",
     })
     with app.app_context():
-        db.create_all()
+        migrate_database()
         for name in ("Admin", "Teacher", "Student"):
             account = User(username=name.lower(), display_name=f"Demo {name}", role=Role(name=name))
             account.set_password(DEMO_PASSWORD)

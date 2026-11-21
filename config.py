@@ -7,6 +7,10 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
+    AUDIT_INTEGRITY_KEY = os.environ.get("AUDIT_INTEGRITY_KEY")
+    LOGIN_SOURCE_LIMIT = int(os.environ.get("LOGIN_SOURCE_LIMIT", "10"))
+    LOGIN_ACCOUNT_LIMIT = int(os.environ.get("LOGIN_ACCOUNT_LIMIT", "5"))
+    LOGIN_WINDOW_SECONDS = int(os.environ.get("LOGIN_WINDOW_SECONDS", "60"))
     SQLALCHEMY_DATABASE_URI = "sqlite:///securerole.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"hide_parameters": True}

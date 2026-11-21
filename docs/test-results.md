@@ -65,3 +65,38 @@ The existing demonstration database had an identical SHA-256 digest before
 and after verification. Read-only inspection showed 3 roles, 6 users, 2
 academic records, 0 access logs and no foreign-key violations. Installed
 dependencies passed `pip check`, which checks installation consistency.
+
+## Phase 7.1 rerun
+
+On 2026-11-21 UTC, `.venv/bin/python -m pytest -v` ran in the same
+Python, SQLite and dependency environment listed above.
+
+| Executed | Passed | Failed | Skipped | Pass rate | Duration |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 163 | 163 | 0 | 0 | 100% (163 ÷ 163) | 45.98 s |
+
+All 142 previous cases and 21 [new hardening cases](../tests/test_hardening.py)
+passed. The previous initialization test now checks the version 1 table
+set. The UTC round-trip test uses an additional insert because audit rows
+are append-only. The independent acceptance cases T1–T11 all passed again
+with the outcomes shown above.
+
+The new tests cover persistent throttling, concurrent quota reservations,
+server-side expiry and revocation, password resets, historical role snapshots,
+SQLite relational guards, HMAC calculation, concurrent appends, integrity
+verification and the preservation of legacy rows with unknown actor roles.
+`pip check` reported no broken requirements.
+
+Chromium verified sign-in and dashboards for all three roles, the audit
+integrity indicator and historical role column, individual session revocation
+across browser contexts, sign-out everywhere, and the HTTP 429 page with
+`Retry-After`. The light theme and local Inter font worked at 1440, 768 and
+320 px without page overflow.
+
+The database running on port 5000 was left unchanged. A consistent backup
+of the demo database was created and schema version 1 was applied to a
+temporary copy. All original values matched for 3 roles, 6 users, 2 academic
+records and 0 audit entries. The copied database passed the read-only audit
+check and had no foreign-key violations. A second migration reported the
+schema already current. An isolated legacy fixture separately verified
+preservation and verification of a nonempty audit journal.

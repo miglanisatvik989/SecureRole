@@ -178,6 +178,7 @@ class StudentRecord(db.Model):
 
 class AccessLog(db.Model):
     __tablename__ = "access_logs"
+    __mapper_args__ = {"batch": False}  # Each insert advances the audit head immediately.
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -197,6 +198,10 @@ class AccessLog(db.Model):
         nullable=False
     )
 
+    actor_role = db.Column(db.String(30))
+    previous_mac = db.Column(db.String(64), nullable=False)
+    entry_mac = db.Column(db.String(64), nullable=False)
+
     actor = db.relationship("User")
 
     __table_args__ = (
@@ -204,6 +209,39 @@ class AccessLog(db.Model):
             "decision IN ('Allowed', 'Denied')"
         ),
     )
+
+
+class AuthSession(db.Model):
+    __tablename__ = "auth_sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_digest = db.Column(db.String(64), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"),
+                        nullable=False, index=True)
+    created_at = db.Column(db.Integer, nullable=False)
+    expires_at = db.Column(db.Integer, nullable=False)
+    revoked_at = db.Column(db.Integer)
+
+    __table_args__ = (db.CheckConstraint("expires_at > created_at"),)
+
+
+class LoginWindow(db.Model):
+    __tablename__ = "login_windows"
+
+    bucket = db.Column(db.String(64), primary_key=True)
+    attempts = db.Column(db.Integer, nullable=False)
+    expires_at = db.Column(db.Integer, nullable=False, index=True)
+
+
+class AuditHead(db.Model):
+    __tablename__ = "audit_chain_state"
+
+    id = db.Column(db.Integer, primary_key=True)
+    head_id = db.Column(db.Integer, nullable=False)
+    head_mac = db.Column(db.String(64), nullable=False)
+    key_tag = db.Column(db.String(64), nullable=False)
+
+    __table_args__ = (db.CheckConstraint("id = 1"),)
 
 
 @event.listens_for(Session, "before_flush")

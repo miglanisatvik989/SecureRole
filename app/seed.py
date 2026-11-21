@@ -4,6 +4,7 @@ import secrets
 
 import click
 
+from app.migrations import initialize_or_error
 from app.models import db, Role, User, StudentRecord, SUPPORTED_ROLES
 
 
@@ -65,7 +66,7 @@ def register_seed_command(app):
     @app.cli.command("seed-db")
     def seed_db():
         """Create tables and add missing fictional demonstration accounts."""
-        db.create_all()
+        initialize_or_error()
         try:
             credentials = seed_demonstration_data()
         except Exception as error:

@@ -73,3 +73,63 @@ interface are preserved. See [measured results](test-results.md).
 This review and its tests assess source controls and documented behavior.
 Infrastructure settings and third-party dependency advisories were outside
 the measured test run.
+
+## Phase 7.1 advanced hardening
+
+| Phase 7 limitation | Phase 7.1 status |
+| --- | --- |
+| No login limiter | SQLite-backed fixed windows apply before password verification. The default caps are 10 per source and 5 per source and username over 60 seconds. SQLite serializes reservations, and denied reservations do not extend expiry. |
+| No server-side or individual revocation | Random session tokens map to database rows through SHA-256 digests. Each row records its account, creation, expiration and revocation time. The user can revoke an owned session or all sessions. Password hash changes revoke all sessions in the same database transaction. |
+| Actor role reflected current role | New logs store the role at authorization. Legacy authenticated rows remain unknown, even when the account still exists. Anonymous events carry a NULL actor and role. |
+| Cross-table rules enforced only by ORM | Version 1 triggers protect ownership, teacher assignments, dependent role changes, fixed role definitions and last-Admin preservation. ORM checks still produce friendly errors. |
+| SQLite audit trail lacked tamper evidence | Appended entries are linked with HMAC-SHA256. SQLite rejects journal updates, deletes and structurally invalid appends. Local verification remains conditional on trusted state and a protected audit key. |
+
+### Audit design and key custody
+
+Werkzeug password hashing is a slow, salted password verification mechanism.
+Audit HMAC instead authenticates stored data and its position in a sequence.
+The audit key must be independent of Flask's signing key. Store it separately
+in protected secret storage and retain it with the backup recovery plan.
+Generate it with a cryptographically secure random generator. Do not replace
+it in place. Key rotation and continuity across key versions would require a
+planned migration.
+
+[The serializer](../app/audit_integrity.py) uses a fixed ordered JSON array
+with a version marker, ID, actor ID, role snapshot, action, resource, decision,
+normalized UTC timestamp with microseconds, and prior hexadecimal MAC.
+The UTF-8 bytes are authenticated with HMAC-SHA256. The genesis link is
+64 zeros. SQLite serializes appends and maintains the singleton audit head
+in the same transaction. The signer checks the tail before appending.
+The verifier reads a single snapshot and checks every link, MAC and the
+recorded head. The CLI opens the database read-only and returns a nonzero
+status on verification failure. The admin activity view shows the local
+verification result. See [Python's HMAC documentation](https://docs.python.org/3/library/hmac.html)
+and [SQLite trigger behavior](https://www.sqlite.org/lang_createtrigger.html).
+
+The migration preserves legacy entries and signs their current contents as
+a baseline. A valid baseline establishes continuity from migration, without
+evidence of changes that may have occurred before migration. SQLite triggers
+are application-level protection against ordinary writes and do not stop an
+operator with unrestricted file or schema access. Local checks alone cannot
+distinguish an authentic older backup from the current database if both the
+journal and its head were rolled back together. Save a verified `ID:MAC`
+checkpoint externally and supply it to `verify-audit --checkpoint` to require
+continuity through that entry. A key compromise defeats the HMAC assurance.
+
+### Session and limiter boundaries
+
+The browser token is a bearer credential carried in the signed, HTTP-only
+cookie. The database holds a digest, and the UI exposes a scoped revocation
+reference and timestamps without showing either token or digest. The existing
+eight-hour deadline and credential binding remain checked. Protected writes
+recheck the session inside the database writer reservation. Requests already
+authorized before revocation can finish reading. Expired and revoked session
+rows are retained and need a retention policy for long-term deployment.
+
+Counters store keyed buckets rather than raw addresses or usernames. They are
+shared by workers using the same SQLite database and Flask signing key. Changing
+that key changes bucket identifiers. The limiter uses the server's peer address
+and does not trust forwarded headers from a client. Shared addresses may share
+quota, and a per-source limiter does not provide global account lockout across
+many independent sources. Hosted deployments can add a trusted proxy, shared
+edge throttling, MFA and a retention policy.

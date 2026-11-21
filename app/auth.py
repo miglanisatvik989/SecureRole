@@ -1,14 +1,15 @@
 """Sign in with a stored account and sign out with a protected form."""
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
-from flask_login import current_user, login_required, login_user, logout_user
+from flask_login import current_user, login_required, login_user
 from flask_wtf.csrf import CSRFError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.forms import LoginForm, LogoutForm
+from app.login_limits import reserve_attempt
 from app.models import User, db
 from app.routes import dashboard_url
-from app.session_security import bind_session
+from app.session_security import bind_session, clear_login, revoke
 
 auth = Blueprint("auth", __name__)
 
@@ -25,13 +26,18 @@ def login():
     error = None
     status = 200
     if form.validate_on_submit():
+        retry = reserve_attempt(form.username.data)
+        if retry:
+            return render_template("429.html", retry=retry), 429, {"Retry-After": str(retry)}
         user = db.session.scalar(db.select(User).filter_by(username=form.username.data))
         if user is None:
             check_password_hash(_missing_user_hash, form.password.data)
         elif user.check_password(form.password.data):
             session.clear()
+            if not bind_session(user):
+                return render_template("login.html", form=LoginForm(formdata=None),
+                                       error="Invalid username or password."), 401
             login_user(user)
-            bind_session(user)
             destination = dashboard_url(user)
             # Only the app-generated dashboard paths are accepted as return targets.
             if request.args.get("next") == url_for("main.dashboard"):
@@ -49,8 +55,8 @@ def login():
 def logout():
     if not LogoutForm().validate_on_submit():
         raise CSRFError()
-    session.clear()
-    logout_user()
+    revoke()
+    clear_login()
     return redirect(url_for("auth.login"), code=303)
 
 

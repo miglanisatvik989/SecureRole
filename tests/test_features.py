@@ -4,6 +4,7 @@ from html import unescape
 import pytest
 
 from app import create_app
+from app.migrations import migrate_database
 from app.models import AccessLog, Role, StudentRecord, User, db
 from app.rbac import Action
 
@@ -19,7 +20,7 @@ def demo(tmp_path):
         "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'features.db'}",
     })
     with app.app_context():
-        db.create_all()
+        migrate_database()
         roles = {name: Role(name=name) for name in ("Admin", "Teacher", "Student")}
         template = User()
         template.set_password(PASSWORD)

@@ -6,6 +6,7 @@ from flask import request
 from sqlalchemy import update
 
 from app import create_app
+from app.migrations import migrate_database
 from app.models import AccessLog, Role, StudentRecord, User, db
 from app.rbac import Action, is_allowed, require_permission, scoped_records
 
@@ -36,7 +37,7 @@ def policy(tmp_path, password_hash):
         return "", 201
 
     with app.app_context():
-        db.create_all()
+        migrate_database()
         roles = {name: Role(name=name) for name in ("Admin", "Teacher", "Student")}
 
         def account(name, role, teacher=None):

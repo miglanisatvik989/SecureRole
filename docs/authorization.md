@@ -4,7 +4,7 @@ Flask-Login resolves the session's user ID. Each dashboard or management route p
 identity to `require_permission` with a policy action and target. The policy
 queries the stored role and, for records, the owning student's ID and teacher
 assignment. Authorization reads use the database transaction's view of the
-rows. The audit module writes the decision before the route returns a response.
+rows. The audit module records the role resolved at the decision and signs the entry before the route returns a response.
 
 ```mermaid
 flowchart TD
@@ -60,7 +60,13 @@ no successful mutation audit row. Opening an authorized form can still add a
 separate Allowed decision.
 
 If a standalone audit insert fails, the request fails before it serves the
-protected page. Audit rows live in the same SQLite database as application data
-and are not tamper-evident. Logged actor references restrict hard deletion, and
-role labels in the activity view reflect current roles because the schema stores
-actor IDs rather than an event-time role snapshot.
+protected page. Standalone authorization and role capture run inside their own
+SQLite writer reservation. For mutations, the decision, role snapshot and
+journal append participate in the mutation transaction. Each append verifies
+the local tail and advances the protected head in the same transaction.
+
+Logged actor references restrict hard deletion. Old audit rows retain an
+unknown role and are authenticated only from the migration baseline forward.
+Server-tracked session ownership gates the Active sessions interface. See the
+[security analysis](security-analysis.md#phase-71-advanced-hardening) for the
+audit chain, rate limits and session architecture.

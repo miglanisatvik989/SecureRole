@@ -3,6 +3,11 @@
 {% set page_title = "Access logs" %}
 {% block workspace %}
 {{ page_heading(page_title, "Review authorization decisions and the resources they affect.") }}
+<p class="notice workspace-notice {{ 'success-notice' if integrity.valid else 'error-banner' }}" role="status">
+    {% if integrity.valid %}Audit chain verified locally · {{ integrity.count }} entries checked.
+    {% else %}Audit integrity check failed. {{ integrity.message }}{% endif %}
+</p>
+{% if integrity.valid %}
 <section class="card content-card" aria-label="Access logs">
     <form method="get" class="filter-form">
         <div class="field"><label for="activity-search">Search</label>
@@ -26,4 +31,5 @@
         </div>
     </nav>
 </section>
+{% endif %}
 {% endblock %}

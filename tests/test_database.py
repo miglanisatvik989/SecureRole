@@ -36,7 +36,7 @@ def test_init_db_is_repeatable(app):
     assert runner.invoke(args=["init-db"]).exit_code == 0
     assert runner.invoke(args=["init-db"]).exit_code == 0
     assert set(inspect(db.engine).get_table_names()) == {
-        "roles", "users", "student_records", "access_logs"
+        "roles", "users", "student_records", "access_logs", "auth_sessions", "login_windows", "audit_chain_state"
     }
     assert counts() == (0, 0, 0, 0)
 
@@ -297,9 +297,10 @@ def test_access_logs_and_utc_round_trip(seeded, decision):
     assert log.actor == user("admin")
     assert anonymous.actor is None
     local_time = datetime(2026, 1, 1, 12, tzinfo=timezone(timedelta(hours=5)))
-    log.timestamp = local_time
+    converted = AccessLog(action="test", resource="record", decision=decision, timestamp=local_time)
+    db.session.add(converted)
     db.session.commit()
-    assert log.timestamp == datetime(2026, 1, 1, 7, tzinfo=timezone.utc)
+    assert converted.timestamp == datetime(2026, 1, 1, 7, tzinfo=timezone.utc)
 
 
 def test_naive_timestamp_is_rejected(app):
