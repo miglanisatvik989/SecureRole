@@ -4,4 +4,8 @@ __pycache__/
 .env
 instance/
 *.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
 .pytest_cache/
