@@ -89,7 +89,9 @@ def create_app(test_config=None):
 
     register_database_commands(app)
 
+    from app.demo_seed import register_demo_command
     from app.seed import register_seed_command
     register_seed_command(app)
+    register_demo_command(app)
 
     return app

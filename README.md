@@ -8,7 +8,7 @@ and audit logging using the existing database schema. Phase 6 adds the
 role dashboards, academic record management, account management and access logs.
 Phase 7 strengthens session and input security and verifies the PBL acceptance criteria.
 Phase 7.1 adds persistent throttling, server-side sessions, historical audit roles,
-database triggers and a verifiable audit chain.
+database triggers and a verifiable audit chain. Phase 7.2 adds a reproducible classroom demo roster.
 
 ## Setup and database initialization
 
@@ -92,10 +92,40 @@ or deletes data. An existing demo username with a different role causes the seed
 transaction to roll back rather than changing that account. Credentials are
 printed only after a successful commit. Other accounts and records are retained.
 
+### Expanded classroom demo
+
+Start from a database initialized with `init-db` or from the original six-account
+demo. For an existing version 0 database, back it up with the server stopped and
+apply the migration above first. Then expand the roster.
+
+```bash
+flask --app run seed-demo
+flask --app run verify-audit
+python run.py
+```
+
+The expanded dataset contains **2 Admins, 12 Teachers and 120 Students** across
+six subjects, with exactly 10 students per teacher. There are **110 academic
+records** and **10 students awaiting records**. The original six accounts
+retain their passwords, assignments, and existing records. Missing email
+addresses are filled with fictional institutional addresses.
+
+`seed-demo` saves credentials for new accounts only to
+`instance/securerole.demo-credentials.csv` with owner-only permissions. Keep
+that Git-ignored file private. Use the saved `seed-db` password for an original
+account. A fresh expanded installation includes credentials for its six
+newly created starter accounts as well. Running the command again preserves the
+credentials file and existing records. The command reports a conflict rather
+than replacing data if a database contains incompatible or unrelated accounts.
+
+See [the demo dataset guide](docs/demo-dataset.md) for recommended usernames,
+subject groups, and a walkthrough that creates genuine audit activity using
+the normal application forms.
+
 ## Signing in and out
 
-Sign in with one of the usernames above and its password from the original
-`seed-db` output. An existing account keeps its password when reseeded. If the
+Sign in with a demo username and its saved password from `seed-db` or the private
+`seed-demo` credentials file. An existing account keeps its password when reseeded. If the
 original output is unavailable, use a freshly seeded, separate demo database
 for the walkthrough.
 
