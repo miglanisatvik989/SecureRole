@@ -2,8 +2,8 @@
 
 SecureRole is a university PBL project using Python, Flask, Flask-SQLAlchemy,
 Flask-Login, SQLite, Werkzeug and python-dotenv. Phase 3 implements the database
-foundation. Login routes, authorization rules, dashboards and CRUD pages belong
-to later phases; visiting `/` currently returns 404.
+foundation. Phase 4 adds session authentication and temporary dashboards for
+Admin, Teacher and Student accounts.
 
 ## Setup and database initialization
 
@@ -29,15 +29,15 @@ flask --app run init-db
 # Create tables if needed, then add the fictional demonstration data:
 flask --app run seed-db
 
-# Start the application (database foundation only):
+# Start the local development server:
 python run.py
 ```
 
 Both initialization commands preserve existing data. The configured relative
 SQLite URI resolves through Flask's instance directory to
 `instance/securerole.db`, regardless of the shell's working directory. SQLite
-foreign-key enforcement is enabled on every SQLAlchemy connection. Flask-Login
-has a user loader; the login endpoint will be added in a later phase.
+foreign-key enforcement is enabled on every SQLAlchemy connection. Open
+`http://127.0.0.1:5000/` to reach the sign-in page.
 
 `create_all()` creates missing tables; it does **not** migrate old schemas. If a
 previous database has a different schema, retain a backup and migrate it before
@@ -68,6 +68,32 @@ existing passwords, names, emails, assignments, marks and logs. It never truncat
 or deletes data. An existing demo username with a different role causes the seed
 transaction to roll back rather than changing that account. Credentials are
 printed only after a successful commit. Other accounts and records are retained.
+
+## Signing in and out
+
+Sign in with one of the usernames above and its password from the original
+`seed-db` output. An existing account keeps its password when reseeded. If the
+original output is unavailable, use a freshly seeded, separate demo database
+for the walkthrough.
+
+Flask-WTF validates the required fields and the CSRF token. The login route
+looks up the username and calls `User.check_password`, which uses Werkzeug
+to compare the submitted password with the stored hash. Invalid credentials
+receive the same error regardless of whether the username exists.
+
+Flask-Login stores the user ID in the signed session and loads the account
+from SQLite on subsequent requests. The stored role selects the dashboard.
+Requests to another role's placeholder return 403. Only the app's own
+dashboard entry point is honored as a return destination after sign-in.
+The dashboard displays the signed-in user's name and role. Its **Sign out**
+button submits a CSRF-protected POST and clears the login session.
+
+Session cookies use HTTP-only and SameSite=Lax settings. Local HTTP works by
+default. Set `SESSION_COOKIE_SECURE=1` in the environment or `.env` when
+serving over HTTPS so the browser sends the session cookie only over HTTPS.
+
+The central RBAC policy, academic record CRUD, user management and full
+dashboards are planned for Phases 5 and 6.
 
 ## Database design
 
@@ -110,7 +136,9 @@ files. Coverage includes initialization, seed counts and repeatability, seed
 rollback, password verification, relationships, invalid assignments and ownership,
 role changes, foreign keys on multiple connections, unique/required constraints,
 marks bounds, log decisions and UTC timestamp round trips. Raw SQL tests verify
-SQLite constraints independently of Python validation.
+SQLite constraints independently of Python validation. Authentication tests
+cover login, form validation, role routing, safe redirects, access protection,
+session persistence, logout and CSRF.
 
 To inspect the local demonstration database without printing passwords:
 

@@ -1,13 +1,17 @@
 from pathlib import Path
 
 import click
-from flask import Flask
+from flask import Flask, request
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from config import Config
 from app.models import db, User
 
 login_manager = LoginManager()
+login_manager.login_view = "auth.login"
+login_manager.login_message = "Sign in to open your dashboard."
+csrf = CSRFProtect()
 
 
 def create_app(test_config=None):
@@ -23,6 +27,21 @@ def create_app(test_config=None):
     db.init_app(app)
 
     login_manager.init_app(app)
+    csrf.init_app(app)
+
+    from app.auth import auth, handle_csrf_error
+    from app.routes import main
+
+    app.register_blueprint(auth)
+    app.register_blueprint(main)
+    app.register_error_handler(CSRFError, handle_csrf_error)
+
+    @app.after_request
+    def protect_session_pages(response):
+        # These pages contain a CSRF token or account-specific information.
+        if request.blueprint in {"auth", "main"}:
+            response.cache_control.no_store = True
+        return response
 
     @login_manager.user_loader
     def load_user(user_id):

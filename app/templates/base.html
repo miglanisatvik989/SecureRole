@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}SecureRole{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+        <a class="brand" href="{{ url_for('main.index') }}">
+            <span class="brand-mark" aria-hidden="true"></span>
+            SecureRole
+        </a>
+        <span class="site-caption">RBAC simulator</span>
+    </header>
+    <main id="content" class="page {% block page_class %}{% endblock %}" tabindex="-1">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

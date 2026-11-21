@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ current_user.role.name }} dashboard | SecureRole{% endblock %}
+{% block content %}
+<section class="panel dashboard-panel" aria-labelledby="dashboard-title">
+    <span class="role-label">{{ current_user.role.name }}</span>
+    <h1 id="dashboard-title">{{ current_user.role.name }} dashboard</h1>
+    <p class="intro">Signed in as <strong>{{ current_user.display_name }}</strong>.</p>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+        {{ logout_form.hidden_tag() }}
+        {{ logout_form.submit(class_="button secondary") }}
+    </form>
+</section>
+{% endblock %}
