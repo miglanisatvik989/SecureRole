@@ -50,8 +50,10 @@ roll back both if validation or the database rejects the write. A denied write
 still commits its audit row independently, before the response.
 
 Phase 6 mutations that pass form validation use `BEGIN IMMEDIATE` before their
-authorization and invariants checks. This reserves SQLite's writer through the
-record or account change and audit commit. An atomic denial releases that
+authorization and invariant checks. Phase 7 also rechecks the session's
+credential binding inside this reservation, so a reset that committed first
+blocks the mutation. SQLite holds the reservation through the record or account
+change and audit commit. An atomic denial releases that
 reservation before persisting its denial independently. The same reservation
 serializes the last-Admin check. Invalid submissions and failed commits leave
 no successful mutation audit row. Opening an authorized form can still add a

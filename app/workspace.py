@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
 from app.forms import LogoutForm
 from app.models import db
+from app.session_security import validate_session
 
 
 def render_workspace(template, *, status=200, **context):
@@ -21,6 +22,7 @@ def save_changes(change):
     """Reserve the writer, run guarded work, and return a safe form error on failure."""
     try:
         reserve_write()
+        validate_session(refresh=True)
         change()
         db.session.commit()
     except ValueError as error:

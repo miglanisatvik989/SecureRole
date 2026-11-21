@@ -7,10 +7,24 @@ from wtforms import FloatField, PasswordField, SelectField, StringField, SubmitF
 from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError
 
 
+def stripped(value):
+    return value.strip() if value else value
+
+
+def printable(form, field):
+    if field.data and not field.data.isprintable():
+        raise ValidationError("Use printable characters only.")
+
+
+def nonblank_password(form, field):
+    if not field.data.strip():
+        raise ValidationError("Choose a password that contains a non-whitespace character.")
+
+
 class LoginForm(FlaskForm):
-    username = StringField("Username", filters=[lambda value: value.strip() if value else value],
-                           validators=[DataRequired(message="Enter your username.")])
-    password = PasswordField("Password", validators=[InputRequired(message="Enter your password.")])
+    username = StringField("Username", filters=[stripped],
+                           validators=[DataRequired(message="Enter your username."), Length(max=80), printable])
+    password = PasswordField("Password", validators=[InputRequired(message="Enter your password."), Length(max=128)])
     submit = SubmitField("Sign in")
 
 
@@ -18,12 +32,8 @@ class LogoutForm(FlaskForm):
     submit = SubmitField("Sign out")
 
 
-def stripped(value):
-    return value.strip() if value else value
-
-
 class RecordForm(FlaskForm):
-    course = StringField("Course", filters=[stripped], validators=[DataRequired(), Length(max=100)])
+    course = StringField("Course", filters=[stripped], validators=[DataRequired(), Length(max=100), printable])
     marks = FloatField("Marks (out of 100)", validators=[InputRequired(), NumberRange(min=0, max=100)])
     submit = SubmitField("Save record")
 
@@ -37,10 +47,10 @@ class DeleteRecordForm(FlaskForm):
 
 
 class AccountForm(FlaskForm):
-    username = StringField("Username", filters=[stripped], validators=[DataRequired(), Length(max=80)])
-    display_name = StringField("Display name", filters=[stripped], validators=[DataRequired(), Length(max=100)])
+    username = StringField("Username", filters=[stripped], validators=[DataRequired(), Length(max=80), printable])
+    display_name = StringField("Display name", filters=[stripped], validators=[DataRequired(), Length(max=100), printable])
     email = StringField("Email (optional)", filters=[stripped], validators=[
-        Optional(), Length(max=120), Regexp(r"[^@\s]+@[^@\s]+\.[^@\s]+\Z", message="Enter a valid email address.")
+        Optional(), Length(max=120), printable, Regexp(r"[^@\s]+@[^@\s]+\.[^@\s]+\Z", message="Enter a valid email address.")
     ])
     role_id = SelectField("Role", coerce=int)
     assigned_teacher_id = SelectField("Assigned teacher", coerce=int)
@@ -48,9 +58,9 @@ class AccountForm(FlaskForm):
 
 
 class NewAccountForm(AccountForm):
-    password = PasswordField("Initial password", validators=[InputRequired(), Length(min=12, max=128)])
+    password = PasswordField("Initial password", validators=[InputRequired(), Length(min=12, max=128), nonblank_password])
 
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField("New password", validators=[InputRequired(), Length(min=12, max=128)])
+    password = PasswordField("New password", validators=[InputRequired(), Length(min=12, max=128), nonblank_password])
     submit = SubmitField("Reset password")

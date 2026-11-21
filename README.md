@@ -6,6 +6,7 @@ foundation. Phase 4 adds session authentication and temporary dashboards for
 Admin, Teacher and Student accounts. Phase 5 adds centralized authorization
 and audit logging using the existing database schema. Phase 6 adds the
 role dashboards, academic record management, account management and access logs.
+Phase 7 strengthens session and input security and verifies the PBL acceptance criteria.
 
 ## Setup and database initialization
 
@@ -93,6 +94,13 @@ button submits a CSRF-protected POST and clears the login session.
 Session cookies use HTTP-only and SameSite=Lax settings. Local HTTP works by
 default. Set `SESSION_COOKIE_SECURE=1` in the environment or `.env` when
 serving over HTTPS so the browser sends the session cookie only over HTTPS.
+For a hosted instance, also set `TRUSTED_HOSTS` to its allowed hostnames, separated
+by commas. Use a unique random secret and a production WSGI server for hosted use.
+
+Sessions expire eight hours after sign-in. Password resets invalidate the
+account's previous sessions when they are next checked. Existing browser
+sessions from before Phase 7 require a fresh sign-in. The demo accounts
+and their passwords are unchanged.
 
 ## Authorization and access logs
 
@@ -151,9 +159,9 @@ See the [authorization architecture and workflow](docs/authorization.md).
 
 The app retains account and audit history and provides no account deletion
 workflow. Log roles reflect the actor's current account role. Audit rows are
-not tamper-evident. Admin password resets replace the stored hash but do not
-revoke sessions already signed in, and there is no email or self-service reset.
-SQLite serializes writes and is intended for the scale of this simulator.
+not tamper-evident. Admin password resets revoke previous authentications.
+There is no email or self-service reset. SQLite serializes writes and is
+intended for the scale of this simulator.
 
 ## Database design
 
@@ -185,6 +193,9 @@ naive timestamps are rejected. Marks use `Float`, matching the original database
 with an explicit inclusive 0–100 check. Fractional marks are supported.
 
 ## Verification
+
+See the [T1–T11 acceptance results](docs/test-results.md) and the
+[Phase 7 security analysis](docs/security-analysis.md).
 
 ```bash
 python -m pytest -q

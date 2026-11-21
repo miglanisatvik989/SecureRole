@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.forms import LoginForm, LogoutForm
 from app.models import User, db
 from app.routes import dashboard_url
+from app.session_security import bind_session
 
 auth = Blueprint("auth", __name__)
 
@@ -30,6 +31,7 @@ def login():
         elif user.check_password(form.password.data):
             session.clear()
             login_user(user)
+            bind_session(user)
             destination = dashboard_url(user)
             # Only the app-generated dashboard paths are accepted as return targets.
             if request.args.get("next") == url_for("main.dashboard"):
