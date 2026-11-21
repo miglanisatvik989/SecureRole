@@ -1,0 +1,57 @@
+erDiagram
+    roles ||--o{ users : "has"
+    users |o--o{ users : "teacher to assigned students"
+    users ||--o| student_records : "student owns"
+    users |o--o{ access_logs : "actor produces"
+    users ||--o{ auth_sessions : "owns"
+    audit_chain_state |o..o| access_logs : "tracks latest entry logically"
+
+    roles {
+        INTEGER id PK
+        VARCHAR_30 name UK "NOT NULL; Admin, Teacher, Student"
+    }
+    users {
+        INTEGER id PK
+        VARCHAR_80 username UK "NOT NULL"
+        VARCHAR_255 password_hash "NOT NULL; Werkzeug hash"
+        VARCHAR_100 display_name "NOT NULL"
+        VARCHAR_120 email UK "nullable"
+        INTEGER role_id FK "NOT NULL"
+        INTEGER assigned_teacher_id FK "nullable; indexed"
+    }
+    student_records {
+        INTEGER id PK
+        INTEGER student_user_id FK,UK "NOT NULL"
+        VARCHAR_100 course "NOT NULL"
+        FLOAT marks "NOT NULL; 0 through 100"
+    }
+    access_logs {
+        INTEGER id PK
+        INTEGER actor_user_id FK "nullable"
+        VARCHAR_100 action "NOT NULL"
+        VARCHAR_200 resource "NOT NULL"
+        VARCHAR_10 decision "NOT NULL; Allowed or Denied"
+        DATETIME timestamp "NOT NULL; UTC default"
+        VARCHAR_30 actor_role "nullable for anonymous and legacy entries"
+        VARCHAR_64 previous_mac "prior entry MAC"
+        VARCHAR_64 entry_mac "HMAC-SHA256"
+    }
+    auth_sessions {
+        INTEGER id PK
+        VARCHAR_64 token_digest UK "SHA-256"
+        INTEGER user_id FK
+        INTEGER created_at "UTC epoch seconds"
+        INTEGER expires_at "UTC epoch seconds"
+        INTEGER revoked_at "nullable UTC epoch seconds"
+    }
+    login_windows {
+        VARCHAR_64 bucket PK "keyed source or source-account bucket"
+        INTEGER attempts
+        INTEGER expires_at "UTC epoch seconds"
+    }
+    audit_chain_state {
+        INTEGER id PK "singleton 1"
+        INTEGER head_id "0 for genesis"
+        VARCHAR_64 head_mac
+        VARCHAR_64 key_tag "key consistency tag"
+    }

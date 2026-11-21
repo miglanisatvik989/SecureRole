@@ -1,0 +1,15 @@
+flowchart LR
+    Browser["Browser · HTML and signed session cookie"] <-->|HTTP requests and responses| Flask["Flask blueprints"]
+    Flask --> Jinja["Jinja templates · role workspaces and forms"]
+    Flask --> Auth["Flask-Login · password verification and server sessions"]
+    Flask --> CSRF["Flask-WTF · CSRF validation"]
+    Flask --> RBAC["Central RBAC · stored actor role and action"]
+    RBAC --> Scope["Record ownership and teacher assignment checks"]
+    RBAC --> Audit["Append authorization decision"]
+    Flask --> Verify["Verify journal before viewing or exporting"]
+    Auth --> ORM["SQLAlchemy and Flask-SQLAlchemy"]
+    Scope --> ORM
+    Audit --> Chain["HMAC-SHA256 chain · independent key and stored head"]
+    Verify --> Chain
+    Chain --> ORM
+    ORM --> SQLite[("SQLite · seven tables")]

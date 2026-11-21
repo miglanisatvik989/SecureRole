@@ -162,10 +162,14 @@ See [authorization](docs/authorization.md) and [security analysis](docs/security
 python -m pytest -q
 ```
 
-The latest run passed **187 tests in 78.78 seconds**, including all
+The Phase 8 run passed **187 tests in 77.96 seconds**, including all
 **T1–T11** authorization acceptance cases. Tests use isolated temporary
-databases. See [test results](docs/test-results.md) for the measured
-environment, fresh-install checks and individual acceptance outcomes.
+databases. See the [verification summary](docs/evidence/verification-summary.md)
+for the measured environment and acceptance outcomes. The
+[screenshot index](docs/evidence/screenshot-index.md) and
+[implementation evidence](docs/evidence/implementation.md) provide the
+browser captures, architecture diagrams and source excerpts. The
+[team walkthrough](docs/evidence/demo-walkthrough.md) follows the five demo accounts.
 
 ## Project structure
 

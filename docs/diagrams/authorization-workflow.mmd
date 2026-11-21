@@ -1,0 +1,14 @@
+flowchart TD
+    Incoming["Protected route"] --> Actor["Read authenticated identity and latest stored role"]
+    Actor --> Policy{"Known action and required role or record scope?"}
+    Rules["Record creation checks target Student · other record actions check record owner and teacher assignment"] --> Policy
+    Policy -->|No| Denied["Append Denied event · actor ID may be NULL"]
+    Denied --> Identity{"Authenticated?"}
+    Identity -->|Yes| Forbidden["403 · Access restricted"]
+    Identity -->|No| Login["Redirect to sign-in"]
+    Policy -->|Yes| Type{"Database mutation?"}
+    Type -->|No| Read["Append Allowed event and continue the protected read"]
+    Type -->|Yes| Write["Stage Allowed event in the same SQLite transaction as the change"]
+    Write --> Commit{"Transaction succeeds?"}
+    Commit -->|Yes| Saved["Commit change and Allowed event together"]
+    Commit -->|No| Rollback["Roll back change and staged event together"]

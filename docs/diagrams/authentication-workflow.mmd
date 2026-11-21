@@ -1,0 +1,17 @@
+flowchart TD
+    Start["Submit sign-in form"] --> Form{"Required fields and CSRF valid?"}
+    Form -->|No| Bad["400 · form feedback"]
+    Form -->|Yes| Quota{"SQLite login quotas available?"}
+    Quota -->|No| Limited["429 · Retry-After"]
+    Quota -->|Yes| Verify{"Stored account and matching Werkzeug hash?"}
+    Verify -->|No| Failed["401 · generic credentials error"]
+    Verify -->|Yes| Bind{"Verified hash still current under SQLite writer lock?"}
+    Bind -->|No| Failed
+    Bind -->|Yes| Token["Create opaque token · store SHA-256 digest and eight-hour deadline in SQLite"]
+    Token --> Cookie["Set signed cookie state · Flask-Login identity and opaque token"]
+    Cookie --> Request["Protected request"]
+    Request --> Valid{"Identity and credential valid · session active and unexpired?"}
+    Valid -->|Yes| Role["Route to stored role's dashboard or continue to requested protected page"]
+    Valid -->|No| Clear["Clear session · redirect protected request to sign-in"]
+    Revoke["Sign-out, session revocation or password change"] --> Session["Revoke matching server session rows"]
+    Session --> Valid

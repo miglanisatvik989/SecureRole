@@ -12,6 +12,7 @@ erDiagram
     users ||--o| student_records : "student owns"
     users |o--o{ access_logs : "actor produces"
     users ||--o{ auth_sessions : "owns"
+    audit_chain_state |o..o| access_logs : "tracks latest entry logically"
 
     roles {
         INTEGER id PK
@@ -63,6 +64,9 @@ erDiagram
         VARCHAR_64 key_tag "key consistency tag"
     }
 ```
+
+The final ERD is also available as [editable Mermaid](database-erd.mmd)
+and a [scalable SVG export](database-erd.svg).
 
 ## Columns and constraints
 

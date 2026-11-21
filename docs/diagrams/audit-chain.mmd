@@ -1,0 +1,13 @@
+flowchart TD
+    Fields["Version, entry ID, actor ID and role, action, resource, decision, UTC timestamp"] --> Message["Serialize ordered fields and previous MAC as JSON"]
+    Previous["Previous-entry MAC · 64 zeroes at genesis"] --> Message
+    Message --> HMAC["Calculate current entry MAC with HMAC-SHA256"]
+    Key["Independent audit key"] --> HMAC
+    HMAC --> Append["Append signed row · trigger advances persisted head"]
+    Append --> Next["Current entry MAC links to the next entry"]
+    Next -.-> Previous
+    Verify["Verify entries in ID order · check links and recompute MACs"] --> Compare["Check stored head and key tag"]
+    Append --> Verify
+    Key --> Verify
+    Checkpoint["Optional externally trusted ID and MAC"] --> Compare
+    Compare --> Result["Return verification result · invalid journal blocks viewing and export"]
