@@ -129,3 +129,26 @@ record rows and 43 audit rows were preserved. The five team sign-in checks
 brought the journal to 48 verified entries. Verification also passed against
 the original entry-43 checkpoint. The redundant snapshots were compared
 before removal. Only the canonical SQLite database remains in the checkout.
+
+## Phase 7.3 application polish
+
+On 2026-11-21 UTC, the complete suite ran on Linux x86_64 with Python 3.14.4.
+Temporary pytest databases were isolated and removed afterward.
+
+| Executed | Passed | Failed | Skipped | Pass rate | Duration |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 182 | 182 | 0 | 0 | 100% | 75.88 s |
+
+All 173 preceding cases and T1–T11 passed. Nine new
+[regression cases](../tests/test_polish.py) cover permission labels, the
+marks meter, record and user filtering, ordering and pagination, Teacher
+scope, CSV output and snapshot behavior, and refusal to export an
+unverified journal.
+
+Chromium verified all three dashboards at 1440, 768 and 320 px. The browser
+walkthrough also exercised search, filtering and retained sort order,
+pagination, a filtered CSV download, the Student empty state, validation,
+submission and success feedback, keyboard interaction and table scrolling.
+The [accessibility review](accessibility-review.md) records the 18 axe scans
+and complementary manual checks. Browser writes went to a temporary
+SQLite copy. The canonical database's SHA-256 was unchanged.

@@ -20,8 +20,15 @@
             <select id="activity-action" name="action"><option value="">All actions</option>
                 {% for value in actions %}<option{% if value == action %} selected{% endif %}>{{ value }}</option>{% endfor %}
             </select></div>
-        <button class="button primary" type="submit">Apply filters</button>
+        <div class="toolbar">
+            <button class="button primary" type="submit">Apply filters</button>
+            <a class="button secondary" href="{{ url_for('activity.index') }}">Clear filters</a>
+        </div>
     </form>
+    <div class="section-heading">
+        <p class="muted">CSV report of recorded audit events matching these filters.</p>
+        <a class="button secondary" href="{{ url_for('activity.export', decision=decision, action=action, q=search, snapshot=snapshot) }}">Download CSV report</a>
+    </div>
     {% include "_activity_table.html" %}
     <nav class="pagination" aria-label="Access log pages">
         <p class="secondary-label">{{ total }} {{ "result" if total == 1 else "results" }} · Page {{ page }} of {{ last_page }}</p>

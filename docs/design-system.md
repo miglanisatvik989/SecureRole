@@ -90,3 +90,20 @@ content column. At 768 px and below, the sidebar becomes a stacked navigation
 and profile bar above the page content. Let names and labels wrap, and keep
 controls large enough for touch. Templates preserve the same navigation and
 forms at every viewport size.
+
+## Phase 7.3 components
+
+Use labeled GET filter forms and a consistent **Apply filters** and
+**Clear filters** toolbar. Display the result count above the table and keep
+pagination inside the same card. Use row headers for account and student
+identity. Wide tables stay in separately focusable scroll regions so the
+page itself can reflow at narrow widths.
+
+Permission cards pair the scope text with restrained status indicators.
+The Student profile uses a native marks meter alongside the visible numeric
+score. Keep the score and permission meaning readable without interpreting
+color. For real form submissions, use a polite status message and suppress
+duplicate submits while navigation is pending.
+
+See the [accessibility review](accessibility-review.md) for the checks
+performed and their limits.

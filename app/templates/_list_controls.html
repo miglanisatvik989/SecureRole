@@ -1,0 +1,44 @@
+{% macro filters(listing, url, search_hint) %}
+<form method="get" action="{{ url }}" class="filter-form listing-filters" aria-label="Filter results">
+    <div class="field">
+        <label for="listing-q">Search</label>
+        <input type="search" id="listing-q" name="q" maxlength="100"
+               placeholder="{{ search_hint }}" value="{{ listing.filters.q }}">
+    </div>
+    {% for key, label, empty, options in listing.fields %}
+    <div class="field">
+        <label for="listing-{{ key }}">{{ label }}</label>
+        <select id="listing-{{ key }}" name="{{ key }}">
+            {% if empty is not none %}<option value="">{{ empty }}</option>{% endif %}
+            {% for value, text in options %}
+            <option value="{{ value }}"{% if listing.filters[key] == value %} selected{% endif %}>{{ text }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+    <div class="toolbar">
+        <button class="button primary" type="submit">Apply filters</button>
+        <a class="button secondary" href="{{ url }}">Clear filters</a>
+    </div>
+</form>
+{% endmacro %}
+
+{% macro result_count(listing) %}
+<p class="listing-count secondary-label">{{ listing.total }} {{ "result" if listing.total == 1 else "results" }}</p>
+{% endmacro %}
+
+{% macro pagination(listing, endpoint, extra={}) %}
+{% if listing.pages > 1 %}
+<nav class="pagination" aria-label="Results pages">
+    <p class="secondary-label">Page {{ listing.page }} of {{ listing.pages }}</p>
+    <div class="toolbar">
+    {% if listing.page > 1 %}
+        <a class="button secondary" rel="prev" href="{{ url_for(endpoint, page=listing.page - 1, **dict(listing.filters, **extra)) }}">Previous</a>
+    {% endif %}
+    {% if listing.page < listing.pages %}
+        <a class="button secondary" rel="next" href="{{ url_for(endpoint, page=listing.page + 1, **dict(listing.filters, **extra)) }}">Next</a>
+    {% endif %}
+    </div>
+</nav>
+{% endif %}
+{% endmacro %}

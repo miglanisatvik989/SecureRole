@@ -1,19 +1,27 @@
-"""Dashboard placeholders and role-based navigation."""
+"""Role dashboards and shared navigation."""
 
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, url_for
 from flask_login import current_user
 
-from sqlalchemy.orm import joinedload
 
 from app.activity import recent_activity
+from app.listing import student_listing
 from app.models import AccessLog, Role, StudentRecord, User, db
 from app.records import record_rows
 from app.workspace import render_workspace
-from app.rbac import Action, require_permission, scoped_students
+from app.rbac import Action, permission_scope, require_permission, scoped_students
 
 main = Blueprint("main", __name__)
 
 DASHBOARD_ROLES = {"admin": "Admin", "teacher": "Teacher", "student": "Student"}
+
+
+PERMISSION_LABELS = (
+    ("View records", Action.VIEW_RECORD), ("Add records", Action.CREATE_RECORD),
+    ("Edit records", Action.EDIT_RECORD), ("Delete records", Action.DELETE_RECORD),
+    ("Manage users", Action.MANAGE_USERS), ("Assign roles", Action.ASSIGN_ROLES),
+    ("View audit logs", Action.VIEW_ACCESS_LOGS),
+)
 
 
 def dashboard_url(user):
@@ -40,6 +48,10 @@ def role_dashboard(role):
             return current_app.login_manager.unauthorized()
         abort(404)
     require_permission(Action.VIEW_DASHBOARD, dashboard_role=DASHBOARD_ROLES[role])
+    permissions = []
+    for label, action in PERMISSION_LABELS:
+        scope = permission_scope(DASHBOARD_ROLES[role], action)
+        permissions.append((label, "allowed" if action == Action.DELETE_RECORD and scope == "all" else scope))
     if role == "admin":
         roles = dict(db.session.execute(db.select(Role.name, db.func.count(User.id))
                                        .join(User, User.role_id == Role.id).group_by(Role.name)).all())
@@ -50,18 +62,22 @@ def role_dashboard(role):
                    ("Academic records", record_count), ("Allowed decisions", decisions.get("Allowed", 0)),
                    ("Denied decisions", decisions.get("Denied", 0))]
         return render_workspace("dashboards/admin.html", metrics=metrics, rows=record_rows(limit=5),
-                                logs=recent_activity(), active="dashboard")
+                                logs=recent_activity(), permissions=permissions, active="dashboard")
 
     if role == "teacher":
-        students = db.session.scalars(scoped_students(current_user.id).options(joinedload(User.student_record))
-                                      .order_by(User.display_name, User.id)).all()
-        with_records = sum(student.student_record is not None for student in students)
-        metrics = [("Assigned students", len(students)), ("With records", with_records),
-                   ("Awaiting records", len(students) - with_records)]
-        return render_workspace("dashboards/teacher.html", students=students, metrics=metrics, active="dashboard")
+        scope = scoped_students(current_user.id)
+        assigned = db.session.scalar(db.select(db.func.count()).select_from(scope.subquery()))
+        with_records = db.session.scalar(db.select(db.func.count()).select_from(
+            scope.where(User.student_record.has()).subquery()
+        ))
+        metrics = [("Assigned students", assigned), ("With records", with_records),
+                   ("Awaiting records", assigned - with_records)]
+        return render_workspace("dashboards/teacher.html", listing=student_listing(scope), metrics=metrics,
+                                assigned=assigned, permissions=permissions, active="dashboard")
 
     rows = record_rows(limit=1)
-    return render_workspace("dashboards/student.html", record=rows[0] if rows else None, active="dashboard")
+    return render_workspace("dashboards/student.html", record=rows[0] if rows else None,
+                            permissions=permissions, active="dashboard")
 
 
 def access_restricted(error):

@@ -1,0 +1,14 @@
+{% from "_ui.html" import icon %}
+{% set scope_labels = {"all": "All records", "assigned": "Assigned only", "own": "Own only", "allowed": "Allowed"} %}
+<section class="card content-card permissions-card" aria-labelledby="permissions-title">
+    <div class="section-heading">
+        <h2 id="permissions-title">{{ icon("shield") }} My permissions</h2>
+        <span class="role-badge">{{ role }}</span>
+    </div>
+    <p class="muted">Teachers can work with records only for assigned students. Students can view only their own record.</p>
+    <dl class="permissions-list">
+        {% for label, scope in permissions %}
+        <div><dt>{{ label }}</dt><dd><span class="status {{ 'status-error' if not scope else 'status-success' if scope in ['all', 'allowed'] else 'status-scoped' }}">{{ scope_labels.get(scope, "Restricted") }}</span></dd></div>
+        {% endfor %}
+    </dl>
+</section>

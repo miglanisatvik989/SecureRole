@@ -20,3 +20,23 @@ for (const trigger of document.querySelectorAll("[data-confirm]")) {
         dialog.showModal();
     });
 }
+
+for (const form of document.querySelectorAll("[data-submission-feedback]")) {
+    const status = form.querySelector(".submission-status");
+    form.addEventListener("submit", (event) => {
+        if (form.dataset.pending) {
+            event.preventDefault();
+            return;
+        }
+        form.dataset.pending = "true";
+        event.submitter?.setAttribute("aria-disabled", "true");
+        status.textContent = "Submitting…";
+    });
+    window.addEventListener("pageshow", () => {
+        delete form.dataset.pending;
+        for (const control of form.querySelectorAll('[aria-disabled="true"]')) {
+            control.removeAttribute("aria-disabled");
+        }
+        status.textContent = "";
+    });
+}

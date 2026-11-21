@@ -45,5 +45,6 @@
         <p class="notice workspace-notice {{ 'success-notice' if category == 'success' }}" role="status">{{ message }}</p>
     {% endfor %}
     {% block workspace %}{% endblock %}
+    {% if permissions is defined %}{% include "_permissions.html" %}{% endif %}
 </div>
 {% endblock %}

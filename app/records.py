@@ -5,6 +5,7 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
 from app.forms import DeleteRecordForm, RecordForm
+from app.listing import student_listing
 from app.models import StudentRecord, User, db
 from app.rbac import Action, is_allowed, require_permission, scoped_records, scoped_students
 from app.workspace import render_workspace, save_changes
@@ -32,7 +33,8 @@ def record_return_url():
 @records.get("/records")
 def index():
     require_permission(Action.LIST_RECORDS)
-    return render_workspace("records/list.html", rows=record_rows(), active="records")
+    listing = student_listing(scoped_students(current_user.id), admin=True)
+    return render_workspace("records/list.html", listing=listing, active="records")
 
 
 @records.get("/records/new")

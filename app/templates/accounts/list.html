@@ -1,5 +1,6 @@
 {% extends "dashboard.html" %}
 {% from "_ui.html" import page_heading %}
+{% from "_list_controls.html" import filters, result_count, pagination %}
 {% set page_title = "Users" %}
 {% block workspace %}
 <header class="workspace-heading">
@@ -7,12 +8,14 @@
     <a class="button primary" href="{{ url_for('accounts.edit') }}">Create account</a>
 </header>
 <section class="card content-card" aria-label="User accounts">
-    {% if rows %}
+    {{ filters(listing, url_for('accounts.index'), "Name, username or email") }}
+    {{ result_count(listing) }}
+    {% if listing.rows %}
     <div class="table-scroll" tabindex="0" role="region" aria-label="User accounts table">
         <table class="data-table">
             <thead><tr><th scope="col">Account</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Assigned teacher</th><th scope="col">Actions</th></tr></thead>
-            <tbody>{% for user in rows %}<tr>
-                <td><strong>{{ user.display_name }}</strong><br><span class="secondary-label">@{{ user.username }}</span></td>
+            <tbody>{% for user in listing.rows %}<tr>
+                <th scope="row">{{ user.display_name }}<br><span class="secondary-label">@{{ user.username }}</span></th>
                 <td>{{ user.email or "—" }}</td><td><span class="role-badge">{{ user.role.name }}</span></td>
                 <td>{{ user.assigned_teacher.display_name if user.assigned_teacher else "—" }}</td>
                 <td><div class="table-actions">
@@ -22,6 +25,7 @@
             </tr>{% endfor %}</tbody>
         </table>
     </div>
-    {% else %}<p class="empty-copy">There are no user accounts.</p>{% endif %}
+    {% else %}<p class="empty-copy">No accounts match your filters. Adjust your search or clear the filters.</p>{% endif %}
+    {{ pagination(listing, 'accounts.index') }}
 </section>
 {% endblock %}

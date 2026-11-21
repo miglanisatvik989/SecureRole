@@ -38,6 +38,15 @@ _ADMIN_RESOURCES = {
 }
 
 
+def permission_scope(role, action):
+    """Describe role-level access from the same rules used by route guards."""
+    if action in _RECORD_SCOPES:
+        return _RECORD_SCOPES[action].get(role)
+    if action in _ADMIN_RESOURCES and role == "Admin":
+        return "allowed"
+    return None
+
+
 def _valid_id(value):
     return type(value) is int and 0 < value <= 2**63 - 1
 
@@ -113,7 +122,7 @@ def _is_allowed(session, actor_id, action, *, record_id=None, student_id=None, d
             else:
                 return False
         elif action in _ADMIN_RESOURCES and dashboard_role is None:
-            roles = ("Admin",)
+            roles = tuple(role for role in SUPPORTED_ROLES if permission_scope(role, action))
         else:
             return False
 

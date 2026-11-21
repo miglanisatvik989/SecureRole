@@ -5,8 +5,9 @@
 {{ page_heading(title, subject|default("")) }}
 <section class="card form-card" aria-label="{{ title }} form">
     {% if error %}<p class="error-banner" role="alert">{{ error }}</p>{% endif %}
-    <form method="post" class="workspace-form">
+    <form method="post" data-submission-feedback class="workspace-form">
         {{ form.hidden_tag() }}
+        <p class="submission-status secondary-label" role="status"></p>
         {% for field in fields %}
             <div class="field">
                 {{ field.label }}

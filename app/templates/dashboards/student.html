@@ -8,6 +8,7 @@
     <section class="card empty-state" aria-labelledby="no-record">
         <span class="empty-icon">{{ icon("record") }}</span>
         <h2 id="no-record">No academic record yet</h2>
+        <p>{{ current_user.display_name }}</p>
         <p>Your course and marks will appear here when a record is added.</p>
         <p>Assigned teacher: {{ current_user.assigned_teacher.display_name if current_user.assigned_teacher else "Unassigned" }}</p>
     </section>

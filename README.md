@@ -119,10 +119,20 @@ not merge independent audit chains.
   Teacher assignments and password resets. The last Admin cannot be demoted.
 - **Teacher.** In **My students**, add records for assigned Students awaiting
   a record, or view and edit existing ones. Deletion and account administration
-  are restricted to Admins.
+  are restricted to Admins. Search, filter by record availability and sort the
+  assigned roster within your assignment scope.
 - **Student.** **My academic record** shows the Student's own course, marks
-  and assigned Teacher. An empty state appears before a record is added.
+  and assigned Teacher, with a marks meter on a scale of 100. An empty state
+  appears before a record is added. All three dashboards include **My permissions**,
+  a summary drawn from the role policy.
+- **Search and filters.** Admins can look up records by student name, username
+  or course, and filter by Teacher, course or availability. The **Users**
+  list supports name, username or email search and role and Teacher filters.
+  Sort and filter choices carry across pages. **Clear filters** restores the
+  default list.
 - **Access activity.** Admins can search, filter and page through **Access logs**.
+  **Download CSV report** exports all matching recorded events from the
+  current snapshot. The export excludes authentication material.
   Run `python -m flask --app run verify-audit` for a read-only chain check.
   Use `--checkpoint ID:MAC` with a trusted, separately stored checkpoint to
   detect rollback past that entry.
@@ -150,7 +160,7 @@ See [authorization](docs/authorization.md) and [security analysis](docs/security
 python -m pytest -q
 ```
 
-The latest run passed **173 tests in 78.02 seconds**, including all
+The latest run passed **182 tests in 75.88 seconds**, including all
 **T1–T11** authorization acceptance cases. Tests use isolated temporary
 databases. See [test results](docs/test-results.md) for the measured
 environment, fresh-install checks and individual acceptance outcomes.

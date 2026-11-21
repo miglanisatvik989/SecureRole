@@ -1,0 +1,36 @@
+{% from "_ui.html" import mark %}
+{% if listing.rows %}
+<div class="table-scroll" tabindex="0" role="region" aria-label="{{ 'Student records table' if show_teacher else 'Assigned students table' }}">
+    <table class="data-table">
+        <thead><tr><th scope="col">Student</th><th scope="col">Course</th><th scope="col">Marks</th>
+            {% if show_teacher %}<th scope="col">Assigned teacher</th>{% endif %}
+            <th scope="col">Actions</th></tr></thead>
+        <tbody>
+        {% for student in listing.rows %}
+            {% set record = student.student_record %}
+            <tr>
+                <th scope="row">{{ student.display_name }}<br><span class="secondary-label">@{{ student.username }}</span></th>
+                <td>{% if record %}{{ record.course }}{% else %}<span class="status status-warning">Awaiting record</span>{% endif %}</td>
+                <td>{{ mark(record.marks) if record else "—" }}</td>
+                {% if show_teacher %}
+                <td>{{ student.assigned_teacher.display_name if student.assigned_teacher else "Unassigned" }}</td>
+                {% endif %}
+                <td><div class="table-actions">
+                    {% if record %}
+                        <a href="{{ url_for('records.detail', record_id=record.id) }}" aria-label="View record for {{ student.display_name }}">View</a>
+                        <a href="{{ url_for('records.edit', record_id=record.id) }}" aria-label="Edit record for {{ student.display_name }}">Edit</a>
+                    {% else %}
+                        <a href="{{ url_for('records.create', student_id=student.id) }}" aria-label="Add record for {{ student.display_name }}">Add record</a>
+                    {% endif %}
+                </div></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="empty-copy">
+    {% if assigned is defined and assigned == 0 %}No students are currently assigned to you.
+    {% else %}No students match your filters. Adjust your search or clear the filters.{% endif %}
+</p>
+{% endif %}

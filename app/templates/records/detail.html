@@ -16,7 +16,8 @@
     <p class="intro" id="delete-description">The academic record for {{ record.student.display_name }} will be permanently removed.</p>
     <div class="toolbar">
         <form method="dialog"><button type="submit" class="button secondary" autofocus>Cancel</button></form>
-        <form method="post" action="{{ url_for('records.delete', record_id=record.id) }}">
+        <form method="post" data-submission-feedback action="{{ url_for('records.delete', record_id=record.id) }}">
+            <p class="submission-status secondary-label" role="status"></p>
             {{ delete_form.hidden_tag() }}{{ delete_form.submit(class_="button danger") }}
         </form>
     </div>

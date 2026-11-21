@@ -6,8 +6,9 @@
 <section class="card form-card" aria-label="Confirm record deletion">
     <p>Delete the academic record for <strong>{{ record.student.display_name }}</strong>?</p>
     {% if error %}<p class="error-banner" role="alert">{{ error }}</p>{% endif %}
-    <form method="post" class="toolbar">
+    <form method="post" data-submission-feedback class="toolbar">
         {{ form.hidden_tag() }}
+        <p class="submission-status secondary-label" role="status"></p>
         <a class="button secondary" href="{{ url_for('records.detail', record_id=record.id) }}">Cancel</a>
         {{ form.submit(class_="button danger") }}
     </form>

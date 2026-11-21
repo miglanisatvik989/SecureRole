@@ -5,6 +5,7 @@
             <p class="secondary-label">@{{ record.student.username }}</p></div>
         <div class="profile-mark"><span class="secondary-label">Marks</span><div class="metric-value">{{ mark(record.marks) }}</div></div>
     </div>
+    <meter class="marks-meter" min="0" max="100" value="{{ record.marks }}" aria-label="Academic marks out of 100">{{ record.marks }} out of 100</meter>
     <dl class="detail-grid">
         <div><dt>Course</dt><dd>{{ record.course }}</dd></div>
         <div><dt>Assigned teacher</dt><dd>{{ record.student.assigned_teacher.display_name if record.student.assigned_teacher else "Unassigned" }}</dd></div>

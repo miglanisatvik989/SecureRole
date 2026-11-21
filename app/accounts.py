@@ -2,9 +2,9 @@
 
 from flask import Blueprint, abort, flash, redirect, request, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
 
 from app.forms import AccountForm, NewAccountForm, ResetPasswordForm
+from app.listing import account_listing
 from app.models import Role, User, db
 from app.rbac import Action, require_permission
 from app.workspace import render_workspace, save_changes
@@ -34,9 +34,8 @@ def configure_choices(form):
 @accounts.get("/users")
 def index():
     require_permission(Action.MANAGE_USERS)
-    rows = db.session.scalars(db.select(User).options(joinedload(User.role), joinedload(User.assigned_teacher))
-                              .order_by(User.display_name, User.id)).all()
-    return render_workspace("accounts/list.html", rows=rows, active="users")
+    listing = account_listing()
+    return render_workspace("accounts/list.html", listing=listing, active="users")
 
 
 @accounts.route("/users/new", methods=["GET", "POST"])

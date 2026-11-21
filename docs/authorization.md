@@ -70,3 +70,21 @@ unknown role and are authenticated only from the migration baseline forward.
 Server-tracked session ownership gates the Active sessions interface. See the
 [security analysis](security-analysis.md#phase-71-advanced-hardening) for the
 audit chain, rate limits and session architecture.
+
+## Permission summary, filtered listings and audit export
+
+Dashboards display role capabilities derived from the central record scope
+and Admin resource rules. The panel describes role scope. Each request still
+evaluates its particular student or record and requires a valid session.
+
+Record and Teacher listings start from a policy-scoped Student query.
+Search, sorting and availability filters narrow the query on the server.
+Records awaiting creation have no stored course, so selecting a course only
+matches Students with records. The Users list is Admin-only.
+
+The CSV endpoint uses the existing Admin access-log guard and the same
+filters and snapshot as the HTML list. It verifies audit integrity before
+returning a report. It projects only the recorded event fields, formats time
+in UTC and treats formula-like text as literal spreadsheet text. It exports
+all matching events across pages. The CSV is a reporting format and does not
+contain the HMAC links needed for journal verification.
