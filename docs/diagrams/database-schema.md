@@ -1,6 +1,9 @@
 # Database schema — version 1 (Phase 7.1)
 
-The four original application tables remain. Version 1 adds three security tables and extends the audit journal.
+All seven tables live in the canonical `instance/securerole.db`.
+Version 1 retains the original four application tables and adds three
+security tables. Use [unified setup](../../README.md#database) to initialize
+or upgrade the database and verify its integrity.
 
 ```mermaid
 erDiagram

@@ -94,3 +94,12 @@ def plan_demo():
         students.extend(cohort)
 
     return tuple(administrators + teachers + students)
+
+
+TEAM_ACCOUNTS = (
+    DemoAccount("satvik", "Satvik", "Admin"),
+    DemoAccount("shubham", "Shubham", "Teacher"),
+    DemoAccount("maulik", "Maulik", "Teacher"),
+    DemoAccount("raj", "Raj", "Student", teacher="shubham", subject=SUBJECTS[0], marks=88),
+    DemoAccount("kunal", "Kunal", "Student", teacher="maulik", prefers_waiting=True),
+)

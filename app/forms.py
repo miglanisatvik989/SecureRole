@@ -7,6 +7,10 @@ from wtforms import FloatField, PasswordField, SelectField, StringField, SubmitF
 from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError
 
 
+PASSWORD_MIN_LENGTH = 12
+PASSWORD_MAX_LENGTH = 128
+
+
 def stripped(value):
     return value.strip() if value else value
 
@@ -24,7 +28,7 @@ def nonblank_password(form, field):
 class LoginForm(FlaskForm):
     username = StringField("Username", filters=[stripped],
                            validators=[DataRequired(message="Enter your username."), Length(max=80), printable])
-    password = PasswordField("Password", validators=[InputRequired(message="Enter your password."), Length(max=128)])
+    password = PasswordField("Password", validators=[InputRequired(message="Enter your password."), Length(max=PASSWORD_MAX_LENGTH)])
     submit = SubmitField("Sign in")
 
 
@@ -58,9 +62,9 @@ class AccountForm(FlaskForm):
 
 
 class NewAccountForm(AccountForm):
-    password = PasswordField("Initial password", validators=[InputRequired(), Length(min=12, max=128), nonblank_password])
+    password = PasswordField("Initial password", validators=[InputRequired(), Length(min=PASSWORD_MIN_LENGTH, max=PASSWORD_MAX_LENGTH), nonblank_password])
 
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField("New password", validators=[InputRequired(), Length(min=12, max=128), nonblank_password])
+    password = PasswordField("New password", validators=[InputRequired(), Length(min=PASSWORD_MIN_LENGTH, max=PASSWORD_MAX_LENGTH), nonblank_password])
     submit = SubmitField("Reset password")

@@ -100,3 +100,32 @@ records and 0 audit entries. The copied database passed the read-only audit
 check and had no foreign-key violations. A second migration reported the
 schema already current. An isolated legacy fixture separately verified
 preservation and verification of a nonempty audit journal.
+
+## Unified setup and consolidation
+
+On 2026-11-21 UTC the complete suite ran on Linux x86_64 with Python 3.14.4.
+It used a dedicated temporary database directory that was removed afterward.
+
+| Executed | Passed | Failed | Skipped | Pass rate | Duration |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 173 | 173 | 0 | 0 | 100% | 78.02 s |
+
+All 170 prior tests and T1–T11 passed. The three new tests cover unified
+setup, preservation of extra accounts and records, team roles and assignments,
+password hashing and validation, private credential file extension, repeat
+execution, SQLite integrity and foreign keys, and preservation of audit state.
+
+A clean local clone with the pending source changes applied was tested with a
+new virtual environment and newly installed dependencies. Fresh setup created
+139 accounts and 111 records. Repeating setup left the database and credential
+file byte-for-byte identical. All five team accounts signed in through HTTP,
+reached the expected dashboards and signed out. The fresh audit chain remained
+valid after those visits. The temporary checkout, databases and credentials
+were removed. The Windows PowerShell instructions were reviewed in Linux.
+
+The live database finished with 3 Admins, 14 Teachers, 122 Students, 111 academic
+records and 11 Students awaiting records. All 134 prior account rows, 110
+record rows and 43 audit rows were preserved. The five team sign-in checks
+brought the journal to 48 verified entries. Verification also passed against
+the original entry-43 checkpoint. The redundant snapshots were compared
+before removal. Only the canonical SQLite database remains in the checkout.
