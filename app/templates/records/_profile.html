@@ -1,0 +1,12 @@
+{% from "_ui.html" import mark %}
+<section class="card profile-card" aria-labelledby="record-student">
+    <div class="section-heading">
+        <div><h2 id="record-student">{{ record.student.display_name }}</h2>
+            <p class="secondary-label">@{{ record.student.username }}</p></div>
+        <div class="profile-mark"><span class="secondary-label">Marks</span><div class="metric-value">{{ mark(record.marks) }}</div></div>
+    </div>
+    <dl class="detail-grid">
+        <div><dt>Course</dt><dd>{{ record.course }}</dd></div>
+        <div><dt>Assigned teacher</dt><dd>{{ record.student.assigned_teacher.display_name if record.student.assigned_teacher else "Unassigned" }}</dd></div>
+    </dl>
+</section>

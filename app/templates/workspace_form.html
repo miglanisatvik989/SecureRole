@@ -1,0 +1,27 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = title %}
+{% block workspace %}
+{{ page_heading(title, subject|default("")) }}
+<section class="card form-card" aria-label="{{ title }} form">
+    {% if error %}<p class="error-banner" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" class="workspace-form">
+        {{ form.hidden_tag() }}
+        {% for field in fields %}
+            <div class="field">
+                {{ field.label }}
+                {% set hints = {"aria_invalid": "true", "aria_describedby": field.id ~ "-error"} if field.errors else {} %}
+                {% if field.type == "PasswordField" %}
+                    {{ field(autocomplete="new-password", **hints) }}
+                {% elif field.name == "marks" %}
+                    {{ field(min=0, max=100, step="any", **hints) }}
+                {% else %}
+                    {{ field(**hints) }}
+                {% endif %}
+                {% if field.errors %}<p id="{{ field.id }}-error" class="field-error" role="alert">{{ field.errors|join(" ") }}</p>{% endif %}
+            </div>
+        {% endfor %}
+        <div class="toolbar">{{ form.submit(class_="button primary") }}<a class="button secondary" href="{{ cancel }}">Cancel</a></div>
+    </form>
+</section>
+{% endblock %}

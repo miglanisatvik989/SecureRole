@@ -1,0 +1,25 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Academic record" %}
+{% block workspace %}
+<header class="workspace-heading">
+    {{ page_heading(page_title) }}
+    <div class="toolbar">
+        {% if can_edit %}<a class="button secondary" href="{{ url_for('records.edit', record_id=record.id) }}">Edit record</a>{% endif %}
+        {% if can_delete %}<a class="button danger" href="{{ url_for('records.delete', record_id=record.id) }}" data-confirm="delete-record">Delete record</a>{% endif %}
+    </div>
+</header>
+{% include "records/_profile.html" %}
+{% if can_delete %}
+<dialog id="delete-record" class="card confirmation-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+    <h2 id="delete-title">Delete academic record?</h2>
+    <p class="intro" id="delete-description">The academic record for {{ record.student.display_name }} will be permanently removed.</p>
+    <div class="toolbar">
+        <form method="dialog"><button type="submit" class="button secondary" autofocus>Cancel</button></form>
+        <form method="post" action="{{ url_for('records.delete', record_id=record.id) }}">
+            {{ delete_form.hidden_tag() }}{{ delete_form.submit(class_="button danger") }}
+        </form>
+    </div>
+</dialog>
+{% endif %}
+{% endblock %}

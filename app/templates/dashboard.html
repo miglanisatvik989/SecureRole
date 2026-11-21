@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import brand, icon %}
+{% from "_ui.html" import brand, icon, nav_link %}
 {% set role = current_user.role.name %}
 {% set pages = {
     "Admin": ("Overview", "Manage users, student records and access activity.", "overview"),
@@ -7,15 +7,18 @@
     "Student": ("My academic record", "View your course details and academic performance.", "record")
 } %}
 {% set heading, description, page_icon = pages[role] %}
-{% block title %}{{ role }} dashboard | SecureRole{% endblock %}
+{% block title %}{{ page_title or (role ~ " dashboard") }} | SecureRole{% endblock %}
 {% block layout_class %}dashboard-layout{% endblock %}
 {% block sidebar %}
 <aside class="sidebar">
     {{ brand() }}
-    <nav aria-label="Dashboard">
-        <a class="nav-link" href="{{ url_for('main.role_dashboard', role=role|lower) }}" aria-current="page">
-            {{ icon(page_icon) }} <span>{{ heading }}</span>
-        </a>
+    <nav class="workspace-nav" aria-label="Dashboard">
+        {{ nav_link(url_for('main.role_dashboard', role=role|lower), heading, page_icon, active == "dashboard" or (role != "Admin" and active == "records")) }}
+        {% if role == "Admin" %}
+            {{ nav_link(url_for('records.index'), "Student records", "record", active == "records") }}
+            {{ nav_link(url_for('accounts.index'), "Users", "students", active == "users") }}
+            {{ nav_link(url_for('activity.index'), "Access logs", "activity", active == "activity") }}
+        {% endif %}
     </nav>
     <div class="sidebar-account">
         <div class="profile">
@@ -26,7 +29,7 @@
             </div>
         </div>
         <form method="post" action="{{ url_for('auth.logout') }}">
-            {{ logout_form.hidden_tag() }}
+            {{ logout_form.csrf_token(id="logout-csrf") }}
             <button class="button secondary sign-out" type="submit">
                 {{ icon("sign-out") }} {{ logout_form.submit.label.text }}
             </button>
@@ -37,14 +40,9 @@
 {% block page_class %}dashboard-main{% endblock %}
 {% block content %}
 <div class="dashboard-content">
-    <header class="page-heading">
-        <h1>{{ heading }}</h1>
-        <p>{{ description }}</p>
-    </header>
-    <section class="card empty-state" aria-labelledby="empty-title">
-        <span class="empty-icon">{{ icon(page_icon) }}</span>
-        <h2 id="empty-title">Dashboard preview</h2>
-        <p>This page currently shows your signed-in profile. Dashboard tools are planned for Phase 6.</p>
-    </section>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="notice workspace-notice {{ 'success-notice' if category == 'success' }}" role="status">{{ message }}</p>
+    {% endfor %}
+    {% block workspace %}{% endblock %}
 </div>
 {% endblock %}

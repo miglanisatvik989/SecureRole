@@ -1,0 +1,23 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading, metrics_grid %}
+{% block workspace %}
+<header class="workspace-heading">
+    {{ page_heading(heading, description) }}
+    <a class="button primary" href="{{ url_for('records.pick_student') }}">Add record</a>
+</header>
+{{ metrics_grid(metrics) }}
+<div class="workspace-stack">
+    <section class="card content-card" aria-labelledby="recent-records">
+        <div class="section-heading"><h2 id="recent-records">Recent student records</h2>
+            <a href="{{ url_for('records.index') }}">View all records</a>
+        </div>
+        {% include "records/_table.html" %}
+    </section>
+    <section class="card content-card" aria-labelledby="recent-activity">
+        <div class="section-heading"><h2 id="recent-activity">Recent access activity</h2>
+            <a href="{{ url_for('activity.index') }}">View access logs</a>
+        </div>
+        {% include "_activity_table.html" %}
+    </section>
+</div>
+{% endblock %}

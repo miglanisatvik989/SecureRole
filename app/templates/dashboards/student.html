@@ -1,0 +1,15 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading, icon %}
+{% block workspace %}
+{{ page_heading(heading, description) }}
+{% if record %}
+    {% include "records/_profile.html" %}
+{% else %}
+    <section class="card empty-state" aria-labelledby="no-record">
+        <span class="empty-icon">{{ icon("record") }}</span>
+        <h2 id="no-record">No academic record yet</h2>
+        <p>Your course and marks will appear here when a record is added.</p>
+        <p>Assigned teacher: {{ current_user.assigned_teacher.display_name if current_user.assigned_teacher else "Unassigned" }}</p>
+    </section>
+{% endif %}
+{% endblock %}

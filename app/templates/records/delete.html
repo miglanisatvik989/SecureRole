@@ -1,0 +1,15 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Delete academic record" %}
+{% block workspace %}
+{{ page_heading(page_title, "This action removes the academic record permanently.") }}
+<section class="card form-card" aria-label="Confirm record deletion">
+    <p>Delete the academic record for <strong>{{ record.student.display_name }}</strong>?</p>
+    {% if error %}<p class="error-banner" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" class="toolbar">
+        {{ form.hidden_tag() }}
+        <a class="button secondary" href="{{ url_for('records.detail', record_id=record.id) }}">Cancel</a>
+        {{ form.submit(class_="button danger") }}
+    </form>
+</section>
+{% endblock %}

@@ -29,18 +29,24 @@ def create_app(test_config=None):
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    from app.accounts import accounts
+    from app.activity import activity
     from app.auth import auth, handle_csrf_error
+    from app.records import records
     from app.routes import access_restricted, main
 
     app.register_blueprint(auth)
     app.register_blueprint(main)
+    app.register_blueprint(records)
+    app.register_blueprint(accounts)
+    app.register_blueprint(activity)
     app.register_error_handler(CSRFError, handle_csrf_error)
     app.register_error_handler(403, access_restricted)
 
     @app.after_request
     def protect_session_pages(response):
         # These pages contain a CSRF token or account-specific information.
-        if request.blueprint in {"auth", "main"}:
+        if request.blueprint in {"auth", "main", "records", "accounts", "activity"}:
             response.cache_control.no_store = True
         return response
 

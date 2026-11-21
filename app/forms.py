@@ -1,8 +1,10 @@
 """Forms shared by the authentication and dashboard views."""
 
+from math import isfinite
+
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField
-from wtforms.validators import DataRequired, InputRequired
+from wtforms import FloatField, PasswordField, SelectField, StringField, SubmitField
+from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError
 
 
 class LoginForm(FlaskForm):
@@ -14,3 +16,41 @@ class LoginForm(FlaskForm):
 
 class LogoutForm(FlaskForm):
     submit = SubmitField("Sign out")
+
+
+def stripped(value):
+    return value.strip() if value else value
+
+
+class RecordForm(FlaskForm):
+    course = StringField("Course", filters=[stripped], validators=[DataRequired(), Length(max=100)])
+    marks = FloatField("Marks (out of 100)", validators=[InputRequired(), NumberRange(min=0, max=100)])
+    submit = SubmitField("Save record")
+
+    def validate_marks(self, field):
+        if field.data is not None and not isfinite(field.data):
+            raise ValidationError("Enter a finite mark between 0 and 100.")
+
+
+class DeleteRecordForm(FlaskForm):
+    submit = SubmitField("Delete record")
+
+
+class AccountForm(FlaskForm):
+    username = StringField("Username", filters=[stripped], validators=[DataRequired(), Length(max=80)])
+    display_name = StringField("Display name", filters=[stripped], validators=[DataRequired(), Length(max=100)])
+    email = StringField("Email (optional)", filters=[stripped], validators=[
+        Optional(), Length(max=120), Regexp(r"[^@\s]+@[^@\s]+\.[^@\s]+\Z", message="Enter a valid email address.")
+    ])
+    role_id = SelectField("Role", coerce=int)
+    assigned_teacher_id = SelectField("Assigned teacher", coerce=int)
+    submit = SubmitField("Save account")
+
+
+class NewAccountForm(AccountForm):
+    password = PasswordField("Initial password", validators=[InputRequired(), Length(min=12, max=128)])
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField("New password", validators=[InputRequired(), Length(min=12, max=128)])
+    submit = SubmitField("Reset password")

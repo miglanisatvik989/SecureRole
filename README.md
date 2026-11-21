@@ -4,7 +4,8 @@ SecureRole is a university PBL project using Python, Flask, Flask-SQLAlchemy,
 Flask-Login, SQLite, Werkzeug and python-dotenv. Phase 3 implements the database
 foundation. Phase 4 adds session authentication and temporary dashboards for
 Admin, Teacher and Student accounts. Phase 5 adds centralized authorization
-and audit logging using the existing database schema.
+and audit logging using the existing database schema. Phase 6 adds the
+role dashboards, academic record management, account management and access logs.
 
 ## Setup and database initialization
 
@@ -84,7 +85,7 @@ receive the same error regardless of whether the username exists.
 
 Flask-Login stores the user ID in the signed session and loads the account
 from SQLite on subsequent requests. The stored role selects the dashboard.
-Requests to another role's placeholder return 403. Only the app's own
+Requests to another role's dashboard return 403. Only the app's own
 dashboard entry point is honored as a return destination after sign-in.
 The dashboard displays the signed-in user's name and role. Its **Sign out**
 button submits a CSRF-protected POST and clears the login session.
@@ -118,19 +119,41 @@ Student account. A Teacher can create, view or edit only when the student's
 their own record. The scoped query applies these rules in SQL, before results
 reach a route.
 
-Requests to the dashboard dispatcher and the three role pages append an
-`Allowed` or `Denied` entry with an actor ID (or NULL for anonymous visitors),
-a fixed action and resource label, and a UTC timestamp. Browser login, logout,
-CSRF failures and unknown routes are outside this authorization audit. Audit
-entries omit passwords, session data and query strings.
+The dashboard and management routes record authorization decisions in UTC.
+Entries include an actor ID (or NULL for anonymous visitors), a fixed action and
+a resource label. They exclude passwords, session data and query strings.
+Successful changes and their audit rows commit together. The authorization
+decision to open a form is logged separately from the decision to submit it.
+See the [authorization architecture and workflow](docs/authorization.md).
 
-The engine applies to routes that explicitly call its guards or scoped query.
-Future write routes can commit a successful change and its staged audit entry
-in one transaction. SQLite database operators can edit audit rows, and the
-existing foreign key prevents hard deletion of logged actors while those
-references remain. See the [authorization architecture and workflow](docs/authorization.md)
-for integration details and concurrency limits. Academic record CRUD, user
-management, full dashboards and the log viewer are planned for Phase 6.
+## Application workflows
+
+- **Admin.** Overview shows live account, record and access counts, recent
+  records and recent activity. Open **Student records** to view all records.
+  **Add record** lists students who do not have one. Open an existing record
+  to edit its course and marks or confirm deletion. Record ownership stays
+  linked to the selected account.
+- **Admin accounts.** Open **Users** to create an account, edit its details,
+  assign a role or an eligible teacher, or reset its password. Choose an initial
+  or replacement password of 12–128 characters and share it securely with the
+  account owner. A student must lose their record before changing to a
+  non-Student role. Reassign a teacher's students before changing their role.
+  The last Admin cannot be demoted.
+- **Teacher.** Open **My students** to see only assigned students. Use **Add
+  record** for a student awaiting a record, or **View** and **Edit** for an
+  existing one. Teacher accounts cannot delete records or manage accounts.
+- **Student.** Open **My academic record** to see your course, marks and
+  teacher, or a message that your record has yet to be added.
+- **Admin activity.** Open **Access logs** to filter by decision, action, or
+  search term. Search matches actor names, usernames, actions and resources.
+  Each page shows up to 20 decisions. Pagination holds the results steady while
+  new audit entries arrive. Reapply a filter to refresh the results.
+
+The app retains account and audit history and provides no account deletion
+workflow. Log roles reflect the actor's current account role. Audit rows are
+not tamper-evident. Admin password resets replace the stored hash but do not
+revoke sessions already signed in, and there is no email or self-service reset.
+SQLite serializes writes and is intended for the scale of this simulator.
 
 ## Database design
 

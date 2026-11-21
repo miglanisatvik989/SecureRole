@@ -72,8 +72,15 @@ toggle switches between “Show password” and “Hide password”.
 | Student | My academic record | View your course details and academic performance. |
 
 Use “Sign in” and “Sign out” for the authentication actions. Each dashboard
-shows the signed-in profile and one active navigation link for its implemented
-page. The preview explains when dashboard tools are planned.
+shows the signed-in profile and highlights the active section. The Admin
+sidebar links to Overview, Student records, Users and Access logs. Teachers and
+students have a single dashboard destination.
+
+Use metric cards as description lists, a shared profile card for the academic
+record, readable empty states and green status notices for successful saves.
+Access decisions pair a green or red indicator with the text “Allowed” or
+“Denied.” The record deletion dialog starts on **Cancel** and supports Escape.
+The confirmation route provides the equivalent flow when dialogs are unavailable.
 
 ## Responsive layout
 

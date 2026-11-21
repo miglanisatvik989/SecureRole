@@ -1,0 +1,15 @@
+{% from "_ui.html" import mark %}
+{% if rows %}
+<div class="table-scroll" tabindex="0" role="region" aria-label="Academic records table">
+    <table class="data-table">
+        <thead><tr><th scope="col">Student</th><th scope="col">Course</th><th scope="col">Marks</th><th scope="col">Assigned teacher</th><th scope="col">Action</th></tr></thead>
+        <tbody>{% for record in rows %}
+        <tr>
+            <td><strong>{{ record.student.display_name }}</strong><br><span class="secondary-label">@{{ record.student.username }}</span></td>
+            <td>{{ record.course }}</td><td>{{ mark(record.marks) }}</td>
+            <td>{{ record.student.assigned_teacher.display_name if record.student.assigned_teacher else "Unassigned" }}</td>
+            <td><a href="{{ url_for('records.detail', record_id=record.id) }}" aria-label="View record for {{ record.student.display_name }}">View</a></td>
+        </tr>{% endfor %}</tbody>
+    </table>
+</div>
+{% else %}<p class="empty-copy">No academic records have been added.</p>{% endif %}

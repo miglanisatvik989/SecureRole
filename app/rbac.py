@@ -11,6 +11,7 @@ from app.models import Role, StudentRecord, SUPPORTED_ROLES, User, db
 
 class Action:
     VIEW_DASHBOARD = "dashboard.view"
+    LIST_RECORDS = "records.list"
     VIEW_RECORD = "record.view"
     CREATE_RECORD = "record.create"
     EDIT_RECORD = "record.edit"
@@ -28,6 +29,7 @@ _RECORD_SCOPES = {
     Action.DELETE_RECORD: {"Admin": "all"},
 }
 _ADMIN_RESOURCES = {
+    Action.LIST_RECORDS: "student_records",
     Action.MANAGE_USERS: "users",
     Action.ASSIGN_ROLES: "roles",
     Action.ASSIGN_TEACHERS: "teacher_assignments",
@@ -61,6 +63,11 @@ def _student_ids(actor_id, action):
         for role, scope in _RECORD_SCOPES[action].items()
     ]
     return statement.where(or_(*conditions))
+
+
+def scoped_students(actor_id, action=Action.VIEW_RECORD):
+    """Select student accounts in scope, including students without a record."""
+    return db.select(User).where(User.id.in_(_student_ids(actor_id, action)))
 
 
 def scoped_records(actor_id, action=Action.VIEW_RECORD):
@@ -137,6 +144,9 @@ def require_permission(action, *, atomic=False, **target):
     if allowed and atomic:
         stage_access_log(db.session, **event)
     else:
+        if atomic:
+            # Release a Phase 6 write reservation before the independent denial insert.
+            db.session.rollback()
         commit_access_log(**event)
 
     if actor_id is None:

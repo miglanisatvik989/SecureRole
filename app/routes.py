@@ -3,8 +3,13 @@
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, url_for
 from flask_login import current_user
 
-from app.forms import LogoutForm
-from app.rbac import Action, require_permission
+from sqlalchemy.orm import joinedload
+
+from app.activity import recent_activity
+from app.models import AccessLog, Role, StudentRecord, User, db
+from app.records import record_rows
+from app.workspace import render_workspace
+from app.rbac import Action, require_permission, scoped_students
 
 main = Blueprint("main", __name__)
 
@@ -35,7 +40,28 @@ def role_dashboard(role):
             return current_app.login_manager.unauthorized()
         abort(404)
     require_permission(Action.VIEW_DASHBOARD, dashboard_role=DASHBOARD_ROLES[role])
-    return render_template("dashboard.html", logout_form=LogoutForm())
+    if role == "admin":
+        roles = dict(db.session.execute(db.select(Role.name, db.func.count(User.id))
+                                       .join(User, User.role_id == Role.id).group_by(Role.name)).all())
+        decisions = dict(db.session.execute(db.select(AccessLog.decision, db.func.count(AccessLog.id))
+                                           .group_by(AccessLog.decision)).all())
+        record_count = db.session.scalar(db.select(db.func.count(StudentRecord.id)))
+        metrics = [("Total students", roles.get("Student", 0)), ("Total teachers", roles.get("Teacher", 0)),
+                   ("Academic records", record_count), ("Allowed decisions", decisions.get("Allowed", 0)),
+                   ("Denied decisions", decisions.get("Denied", 0))]
+        return render_workspace("dashboards/admin.html", metrics=metrics, rows=record_rows(limit=5),
+                                logs=recent_activity(), active="dashboard")
+
+    if role == "teacher":
+        students = db.session.scalars(scoped_students(current_user.id).options(joinedload(User.student_record))
+                                      .order_by(User.display_name, User.id)).all()
+        with_records = sum(student.student_record is not None for student in students)
+        metrics = [("Assigned students", len(students)), ("With records", with_records),
+                   ("Awaiting records", len(students) - with_records)]
+        return render_workspace("dashboards/teacher.html", students=students, metrics=metrics, active="dashboard")
+
+    rows = record_rows(limit=1)
+    return render_workspace("dashboards/student.html", record=rows[0] if rows else None, active="dashboard")
 
 
 def access_restricted(error):

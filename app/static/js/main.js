@@ -11,3 +11,12 @@ if (toggle) {
         toggle.classList.toggle("is-visible", show);
     });
 }
+
+for (const trigger of document.querySelectorAll("[data-confirm]")) {
+    const dialog = document.getElementById(trigger.dataset.confirm);
+    if (!dialog || typeof dialog.showModal !== "function") continue;
+    trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        dialog.showModal();
+    });
+}

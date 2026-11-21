@@ -1,0 +1,14 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Choose a student" %}
+{% block workspace %}
+{{ page_heading(page_title, "Select a student account without an academic record.") }}
+<section class="card content-card" aria-label="Eligible student accounts">
+    {% if students %}
+    <ul class="choice-list">{% for student in students %}
+        <li><div><strong>{{ student.display_name }}</strong><br><span class="secondary-label">@{{ student.username }}</span></div>
+        <a class="button secondary" href="{{ url_for('records.create', student_id=student.id) }}" aria-label="Add record for {{ student.display_name }}">Add record</a></li>
+    {% endfor %}</ul>
+    {% else %}<p class="empty-copy">All current student accounts already have an academic record, or there are no student accounts yet.</p>{% endif %}
+</section>
+{% endblock %}

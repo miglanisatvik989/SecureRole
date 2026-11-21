@@ -1,6 +1,6 @@
 # Authorization architecture and workflow
 
-Flask-Login resolves the session's user ID. The dashboard route passes that
+Flask-Login resolves the session's user ID. Each dashboard or management route passes that
 identity to `require_permission` with a policy action and target. The policy
 queries the stored role and, for records, the owning student's ID and teacher
 assignment. Authorization reads use the database transaction's view of the
@@ -22,6 +22,7 @@ flowchart TD
 | API | Purpose |
 | --- | --- |
 | `is_allowed(actor_id, action, ...)` | Evaluate a single permission without logging |
+| `scoped_students(actor_id, action)` | Build a select for student accounts, including those without records |
 | `scoped_records(actor_id, action)` | Build a SQLAlchemy select for view, edit or delete scope |
 | `require_permission(action, ...)` | Evaluate and log the decision, then stop the request on denial |
 | `stage_access_log(session, ...)` | Stage an audit row in the caller's transaction |
@@ -48,11 +49,16 @@ entry is then staged in the same session as the write. Commit both together, or
 roll back both if validation or the database rejects the write. A denied write
 still commits its audit row independently, before the response.
 
+Phase 6 mutations that pass form validation use `BEGIN IMMEDIATE` before their
+authorization and invariants checks. This reserves SQLite's writer through the
+record or account change and audit commit. An atomic denial releases that
+reservation before persisting its denial independently. The same reservation
+serializes the last-Admin check. Invalid submissions and failed commits leave
+no successful mutation audit row. Opening an authorized form can still add a
+separate Allowed decision.
+
 If a standalone audit insert fails, the request fails before it serves the
-protected page. SQLite serializes competing writers. The policy does not lock
-the role or assignment between a permission check and a later write. A future
-route that must guard against a concurrent role or assignment change should
-enforce the policy in the mutation statement or use suitable transaction locking.
-Audit rows live in the same SQLite database as application data and are not
-tamper-evident. Logged actor references also restrict hard deletion under the
-current schema.
+protected page. Audit rows live in the same SQLite database as application data
+and are not tamper-evident. Logged actor references restrict hard deletion, and
+role labels in the activity view reflect current roles because the schema stores
+actor IDs rather than an event-time role snapshot.

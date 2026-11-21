@@ -1,0 +1,29 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Access logs" %}
+{% block workspace %}
+{{ page_heading(page_title, "Review authorization decisions and the resources they affect.") }}
+<section class="card content-card" aria-label="Access logs">
+    <form method="get" class="filter-form">
+        <div class="field"><label for="activity-search">Search</label>
+            <input type="search" id="activity-search" name="q" value="{{ search }}" maxlength="100" placeholder="Actor, action or resource"></div>
+        <div class="field"><label for="activity-decision">Decision</label>
+            <select id="activity-decision" name="decision"><option value="">All decisions</option>
+                {% for value in ("Allowed", "Denied") %}<option{% if value == decision %} selected{% endif %}>{{ value }}</option>{% endfor %}
+            </select></div>
+        <div class="field"><label for="activity-action">Action</label>
+            <select id="activity-action" name="action"><option value="">All actions</option>
+                {% for value in actions %}<option{% if value == action %} selected{% endif %}>{{ value }}</option>{% endfor %}
+            </select></div>
+        <button class="button primary" type="submit">Apply filters</button>
+    </form>
+    {% include "_activity_table.html" %}
+    <nav class="pagination" aria-label="Access log pages">
+        <p class="secondary-label">{{ total }} {{ "result" if total == 1 else "results" }} · Page {{ page }} of {{ last_page }}</p>
+        <div class="toolbar">
+            {% if page > 1 %}<a class="button secondary" rel="prev" href="{{ url_for('activity.index', page=page-1, decision=decision, action=action, q=search, snapshot=snapshot) }}">Previous</a>{% endif %}
+            {% if page < last_page %}<a class="button secondary" rel="next" href="{{ url_for('activity.index', page=page+1, decision=decision, action=action, q=search, snapshot=snapshot) }}">Next</a>{% endif %}
+        </div>
+    </nav>
+</section>
+{% endblock %}

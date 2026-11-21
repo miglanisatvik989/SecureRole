@@ -1,0 +1,10 @@
+{% extends "dashboard.html" %}
+{% from "_ui.html" import page_heading %}
+{% set page_title = "Student records" %}
+{% block workspace %}
+<header class="workspace-heading">
+    {{ page_heading(page_title, "Review academic records for student accounts.") }}
+    <a class="button primary" href="{{ url_for('records.pick_student') }}">Add record</a>
+</header>
+<section class="card content-card" aria-label="Student records">{% include "records/_table.html" %}</section>
+{% endblock %}
