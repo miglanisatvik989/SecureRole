@@ -7,6 +7,7 @@ if (toggle) {
     toggle.addEventListener("click", () => {
         const show = password.type === "password";
         password.type = show ? "text" : "password";
-        toggle.textContent = show ? "Hide password" : "Show password";
+        toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
+        toggle.classList.toggle("is-visible", show);
     });
 }

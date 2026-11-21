@@ -1,13 +1,50 @@
 {% extends "base.html" %}
-{% block title %}{{ current_user.role.name }} dashboard | SecureRole{% endblock %}
+{% from "_ui.html" import brand, icon %}
+{% set role = current_user.role.name %}
+{% set pages = {
+    "Admin": ("Overview", "Manage users, student records and access activity.", "overview"),
+    "Teacher": ("My students", "View and manage your assigned students.", "students"),
+    "Student": ("My academic record", "View your course details and academic performance.", "record")
+} %}
+{% set heading, description, page_icon = pages[role] %}
+{% block title %}{{ role }} dashboard | SecureRole{% endblock %}
+{% block layout_class %}dashboard-layout{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+    {{ brand() }}
+    <nav aria-label="Dashboard">
+        <a class="nav-link" href="{{ url_for('main.role_dashboard', role=role|lower) }}" aria-current="page">
+            {{ icon(page_icon) }} <span>{{ heading }}</span>
+        </a>
+    </nav>
+    <div class="sidebar-account">
+        <div class="profile">
+            <span class="avatar" aria-hidden="true">{{ current_user.display_name[:1]|upper }}</span>
+            <div class="profile-details">
+                <p class="profile-name">{{ current_user.display_name }}</p>
+                <span class="role-badge">{{ role }}</span>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+            {{ logout_form.hidden_tag() }}
+            <button class="button secondary sign-out" type="submit">
+                {{ icon("sign-out") }} {{ logout_form.submit.label.text }}
+            </button>
+        </form>
+    </div>
+</aside>
+{% endblock %}
+{% block page_class %}dashboard-main{% endblock %}
 {% block content %}
-<section class="panel dashboard-panel" aria-labelledby="dashboard-title">
-    <span class="role-label">{{ current_user.role.name }}</span>
-    <h1 id="dashboard-title">{{ current_user.role.name }} dashboard</h1>
-    <p class="intro">Signed in as <strong>{{ current_user.display_name }}</strong>.</p>
-    <form method="post" action="{{ url_for('auth.logout') }}">
-        {{ logout_form.hidden_tag() }}
-        {{ logout_form.submit(class_="button secondary") }}
-    </form>
-</section>
+<div class="dashboard-content">
+    <header class="page-heading">
+        <h1>{{ heading }}</h1>
+        <p>{{ description }}</p>
+    </header>
+    <section class="card empty-state" aria-labelledby="empty-title">
+        <span class="empty-icon">{{ icon(page_icon) }}</span>
+        <h2 id="empty-title">Dashboard preview</h2>
+        <p>This page currently shows your signed-in profile. Dashboard tools are planned for Phase 6.</p>
+    </section>
+</div>
 {% endblock %}

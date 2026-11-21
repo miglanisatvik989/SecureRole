@@ -4,20 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}SecureRole{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='shield.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#content">Skip to content</a>
-    <header class="site-header">
-        <a class="brand" href="{{ url_for('main.index') }}">
-            <span class="brand-mark" aria-hidden="true"></span>
-            SecureRole
-        </a>
-        <span class="site-caption">RBAC simulator</span>
-    </header>
-    <main id="content" class="page {% block page_class %}{% endblock %}" tabindex="-1">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="{% block layout_class %}centered-layout{% endblock %}">
+        {% block sidebar %}{% endblock %}
+        <main id="content" class="{% block page_class %}centered-page{% endblock %}" tabindex="-1">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 </body>
 </html>

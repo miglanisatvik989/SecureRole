@@ -1,0 +1,30 @@
+{% macro icon(name, classes="") %}
+<svg class="icon {{ classes }}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true" focusable="false">
+    {% if name == "shield" %}
+    <path d="M12 22s7-3 7-10V5l-7-3-7 3v7c0 7 7 10 7 10Z"/>
+    {% elif name == "overview" %}
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    {% elif name == "students" %}
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>
+    <circle cx="9" cy="7" r="4"/>
+    {% elif name == "record" %}
+    <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 9h6m-6 4h6m-6 4h3"/>
+    {% elif name == "sign-out" %}
+    <path d="M10 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5m7 14 5-5-5-5m5 5H9"/>
+    {% elif name == "eye" %}
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+    {% elif name == "eye-off" %}
+    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A11 11 0 0 1 12 5c6.4 0 10 7 10 7a19 19 0 0 1-2.7 3.5M6.5 6.5A18 18 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.5-1.5"/>
+    {% endif %}
+</svg>
+{% endmacro %}
+
+{% macro brand() %}
+<a class="brand" href="{{ url_for('main.index') }}">
+    <span class="brand-mark">{{ icon("shield") }}</span>
+    SecureRole
+</a>
+{% endmacro %}
