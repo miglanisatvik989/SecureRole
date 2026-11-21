@@ -1,9 +1,10 @@
-"""Phase 4 dashboard placeholders and role-based navigation."""
+"""Dashboard placeholders and role-based navigation."""
 
-from flask import Blueprint, abort, redirect, render_template, url_for
-from flask_login import current_user, login_required
+from flask import Blueprint, abort, current_app, make_response, redirect, render_template, url_for
+from flask_login import current_user
 
 from app.forms import LogoutForm
+from app.rbac import Action, require_permission
 
 main = Blueprint("main", __name__)
 
@@ -22,16 +23,22 @@ def index():
 
 
 @main.get("/dashboard")
-@login_required
 def dashboard():
+    require_permission(Action.VIEW_DASHBOARD)
     return redirect(dashboard_url(current_user))
 
 
 @main.get("/dashboard/<role>")
-@login_required
 def role_dashboard(role):
     if role not in DASHBOARD_ROLES:
+        if not current_user.is_authenticated:
+            return current_app.login_manager.unauthorized()
         abort(404)
-    if current_user.role.name != DASHBOARD_ROLES[role]:
-        abort(403)
+    require_permission(Action.VIEW_DASHBOARD, dashboard_role=DASHBOARD_ROLES[role])
     return render_template("dashboard.html", logout_form=LogoutForm())
+
+
+def access_restricted(error):
+    response = make_response(render_template("403.html"), 403)
+    response.cache_control.no_store = True
+    return response

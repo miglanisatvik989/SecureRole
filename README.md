@@ -3,7 +3,8 @@
 SecureRole is a university PBL project using Python, Flask, Flask-SQLAlchemy,
 Flask-Login, SQLite, Werkzeug and python-dotenv. Phase 3 implements the database
 foundation. Phase 4 adds session authentication and temporary dashboards for
-Admin, Teacher and Student accounts.
+Admin, Teacher and Student accounts. Phase 5 adds centralized authorization
+and audit logging using the existing database schema.
 
 ## Setup and database initialization
 
@@ -92,8 +93,44 @@ Session cookies use HTTP-only and SameSite=Lax settings. Local HTTP works by
 default. Set `SESSION_COOKIE_SECURE=1` in the environment or `.env` when
 serving over HTTPS so the browser sends the session cookie only over HTTPS.
 
-The central RBAC policy, academic record CRUD, user management and full
-dashboards are planned for Phases 5 and 6.
+## Authorization and access logs
+
+`app/rbac.py` checks permissions against roles and assignments stored in SQLite.
+A missing actor, unknown action, or invalid target is denied. The dashboard guard
+redirects anonymous visitors to sign-in and returns the Access Restricted page
+with HTTP 403 when a signed-in user requests another role's dashboard.
+
+| Operation | Admin | Teacher | Student |
+| --- | --- | --- | --- |
+| View records | All | Assigned only | Own only |
+| Create records | All | Assigned only | Denied |
+| Edit records | All | Assigned only | Denied |
+| Delete records | All | Denied | Denied |
+| Manage users | Allowed | Denied | Denied |
+| Assign roles | Allowed | Denied | Denied |
+| Assign teachers | Allowed | Denied | Denied |
+| View access logs | Allowed | Denied | Denied |
+
+Record view, edit and delete checks identify the owner through
+`student_records.student_user_id`. To create a record, the target must be a
+Student account. A Teacher can create, view or edit only when the student's
+`assigned_teacher_id` matches the teacher's user ID. Students can view only
+their own record. The scoped query applies these rules in SQL, before results
+reach a route.
+
+Requests to the dashboard dispatcher and the three role pages append an
+`Allowed` or `Denied` entry with an actor ID (or NULL for anonymous visitors),
+a fixed action and resource label, and a UTC timestamp. Browser login, logout,
+CSRF failures and unknown routes are outside this authorization audit. Audit
+entries omit passwords, session data and query strings.
+
+The engine applies to routes that explicitly call its guards or scoped query.
+Future write routes can commit a successful change and its staged audit entry
+in one transaction. SQLite database operators can edit audit rows, and the
+existing foreign key prevents hard deletion of logged actors while those
+references remain. See the [authorization architecture and workflow](docs/authorization.md)
+for integration details and concurrency limits. Academic record CRUD, user
+management, full dashboards and the log viewer are planned for Phase 6.
 
 ## Database design
 

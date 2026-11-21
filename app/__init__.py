@@ -30,11 +30,12 @@ def create_app(test_config=None):
     csrf.init_app(app)
 
     from app.auth import auth, handle_csrf_error
-    from app.routes import main
+    from app.routes import access_restricted, main
 
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_error_handler(CSRFError, handle_csrf_error)
+    app.register_error_handler(403, access_restricted)
 
     @app.after_request
     def protect_session_pages(response):

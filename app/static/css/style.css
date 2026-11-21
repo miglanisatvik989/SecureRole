@@ -253,6 +253,10 @@ code, .technical { font-family: var(--font-mono); }
     text-align: center;
 }
 .empty-icon { margin-bottom: 8px; }
+.restricted-icon {
+    color: var(--error);
+    background: color-mix(in srgb, var(--error) 6%, var(--surface));
+}
 .empty-state p { max-width: 43ch; }
 
 .table-scroll { max-width: 100%; overflow-x: auto; }
