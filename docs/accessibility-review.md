@@ -32,3 +32,32 @@ full WCAG conformance. Screen reader announcements were checked through
 markup and browser accessibility roles. A live screen reader session,
 physical touch devices, other browsers, and forced-colors testing were
 outside this run.
+
+## Phase 7.4 visual baseline
+
+Chromium and axe-core 4.14.1 checked all three role dashboards at 1920,
+1440, 1024, 768, 390 and 320 CSS pixels. The sample also covered narrow
+sign-in, the expanded mobile menu, the record editor and its error state,
+the deletion dialog, password reset, desktop audit activity, Access
+restricted, and the Student waiting state.
+
+The first run found metric-card icons inside the definition list structure.
+The icons now sit outside each label/value list. The final run reported
+**zero violations in 27 scans**. Axe requested contrast review for elements
+outside four scroll viewports. Calculated contrast using the computed
+foreground and background colors checked all 81 flagged observations.
+The lowest ratio was **5.07:1**.
+
+Manual browser interaction checked the mobile menu's collapsed state, Enter
+and Tab navigation, Escape and focus return, and access to the sign-out
+control. The menu and password control measured at least 24 by 24 CSS
+pixels. The password toggle remained within the input area and kept its
+accessible name. Native dialog focus entered on Cancel, remained inside
+the dialog during Tab navigation, and returned to the trigger on Escape.
+The browser also checked field errors, submission and success feedback,
+horizontal scrolling of a focused mobile table, sticky desktop headers and
+sidebar, zero page-level horizontal overflow, and reduced motion.
+
+This remains a sampled review. Live screen readers, physical touch devices,
+browser engines other than Chromium, and forced-colors mode were outside
+the verification run.

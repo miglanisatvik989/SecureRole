@@ -5,8 +5,9 @@
         <tbody>{% for log in logs %}<tr>
             <td><time class="technical" datetime="{{ log.timestamp.isoformat() }}">{{ log.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</time></td>
             <td>{% if log.actor %}<strong>{{ log.actor.display_name }}</strong><br><span class="secondary-label">@{{ log.actor.username }}</span>{% else %}Anonymous{% endif %}</td>
-            <td>{{ "—" if log.actor_user_id is none else (log.actor_role or "Unknown") }}</td>
-            <td class="technical">{{ log.action }}</td><td class="technical">{{ log.resource }}</td>
+            <td>{% if log.actor_role %}<span class="role-badge">{{ log.actor_role }}</span>
+                {% else %}{{ "—" if log.actor_user_id is none else "Unknown" }}{% endif %}</td>
+            <td>{{ log.action|audit_action_label }}<br><code class="secondary-label">{{ log.action }}</code></td><td class="technical">{{ log.resource }}</td>
             <td><span class="status {{ 'status-success' if log.decision == 'Allowed' else 'status-error' }}">{{ log.decision }}</span></td>
         </tr>{% endfor %}</tbody>
     </table>

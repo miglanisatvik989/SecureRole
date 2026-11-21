@@ -17,6 +17,25 @@ activity = Blueprint("activity", __name__)
 PAGE_SIZE = 20
 
 
+ACTION_LABELS = {
+    Action.VIEW_DASHBOARD: "View dashboard",
+    Action.LIST_RECORDS: "List student records",
+    Action.VIEW_RECORD: "View academic record",
+    Action.CREATE_RECORD: "Add academic record",
+    Action.EDIT_RECORD: "Edit academic record",
+    Action.DELETE_RECORD: "Delete academic record",
+    Action.MANAGE_USERS: "Manage users",
+    Action.ASSIGN_ROLES: "Assign roles",
+    Action.ASSIGN_TEACHERS: "Assign teachers",
+    Action.VIEW_ACCESS_LOGS: "View access logs",
+}
+
+
+@activity.app_template_filter("audit_action_label")
+def audit_action_label(action):
+    return ACTION_LABELS.get(action, action.replace(".", " ").replace("_", " ").capitalize())
+
+
 def recent_activity():
     return db.session.scalars(db.select(AccessLog).options(joinedload(AccessLog.actor))
                               .order_by(AccessLog.timestamp.desc(), AccessLog.id.desc()).limit(5)).all()
@@ -67,14 +86,19 @@ def index():
     statement, actions, filters = filtered_activity(snapshot)
     page = max(1, request.args.get("page", 1, type=int))
     # Bound the offset by the actual count, including for arbitrary page numbers.
-    total = db.session.scalar(db.select(db.func.count()).select_from(statement.subquery()))
+    matched = statement.subquery()
+    decisions = dict(db.session.execute(
+        db.select(matched.c.decision, db.func.count()).group_by(matched.c.decision)
+    ).all())
+    total = sum(decisions.values())
     last_page = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
     page = min(page, last_page)
     logs = db.session.scalars(newest_first(statement).options(joinedload(AccessLog.actor))
                               .limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)).all()
     return render_workspace("activity.html", logs=logs, actions=actions, decision=filters["decision"],
                             action=filters["action"], search=filters["q"], page=page, last_page=last_page,
-                            total=total, snapshot=snapshot, active="activity", integrity=integrity)
+                            total=total, snapshot=snapshot, active="activity", integrity=integrity,
+                            allowed=decisions.get("Allowed", 0), denied=decisions.get("Denied", 0))
 
 
 def spreadsheet_text(value):

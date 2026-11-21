@@ -9,7 +9,7 @@
     <form method="post" data-submission-feedback class="toolbar">
         {{ form.hidden_tag() }}
         <p class="submission-status secondary-label" role="status"></p>
-        <a class="button secondary" href="{{ url_for('records.detail', record_id=record.id) }}">Cancel</a>
+        <a class="button secondary" href="{{ url_for('records.detail', record_id=record.id, return_to=return_to) }}">Cancel</a>
         {{ form.submit(class_="button danger") }}
     </form>
 </section>

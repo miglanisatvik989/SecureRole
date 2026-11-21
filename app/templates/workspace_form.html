@@ -8,12 +8,21 @@
     <form method="post" data-submission-feedback class="workspace-form">
         {{ form.hidden_tag() }}
         <p class="submission-status secondary-label" role="status"></p>
-        {% for field in fields %}
+        {% for legend, fields in groups %}
+        <fieldset class="form-group">
+            <legend>{{ legend }}</legend>
+            {% for field in fields %}
             <div class="field">
                 {{ field.label }}
-                {% set hints = {"aria_invalid": "true", "aria_describedby": field.id ~ "-error"} if field.errors else {} %}
+                {% set description = field.id ~ "-error" if field.errors else "" %}
+                {% if field.type == "PasswordField" %}
+                    {% set description = (field.id ~ "-requirements " ~ description)|trim %}
+                {% endif %}
+                {% set hints = {"aria_invalid": "true"} if field.errors else {} %}
+                {% if description %}{% set hints = dict(hints, aria_describedby=description) %}{% endif %}
                 {% if field.type == "PasswordField" %}
                     {{ field(autocomplete="new-password", **hints) }}
+                    <p id="{{ field.id }}-requirements" class="secondary-label">Use 12–128 characters and at least one non-whitespace character.</p>
                 {% elif field.name == "marks" %}
                     {{ field(min=0, max=100, step="any", **hints) }}
                 {% else %}
@@ -21,6 +30,8 @@
                 {% endif %}
                 {% if field.errors %}<p id="{{ field.id }}-error" class="field-error" role="alert">{{ field.errors|join(" ") }}</p>{% endif %}
             </div>
+            {% endfor %}
+        </fieldset>
         {% endfor %}
         <div class="toolbar">{{ form.submit(class_="button primary") }}<a class="button secondary" href="{{ cancel }}">Cancel</a></div>
     </form>

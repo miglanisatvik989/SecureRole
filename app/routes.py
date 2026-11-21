@@ -6,6 +6,7 @@ from flask_login import current_user
 
 from app.activity import recent_activity
 from app.listing import student_listing
+from app.navigation import listing_link
 from app.models import AccessLog, Role, StudentRecord, User, db
 from app.records import record_rows
 from app.workspace import render_workspace
@@ -58,9 +59,11 @@ def role_dashboard(role):
         decisions = dict(db.session.execute(db.select(AccessLog.decision, db.func.count(AccessLog.id))
                                            .group_by(AccessLog.decision)).all())
         record_count = db.session.scalar(db.select(db.func.count(StudentRecord.id)))
-        metrics = [("Total students", roles.get("Student", 0)), ("Total teachers", roles.get("Teacher", 0)),
-                   ("Academic records", record_count), ("Allowed decisions", decisions.get("Allowed", 0)),
-                   ("Denied decisions", decisions.get("Denied", 0))]
+        metrics = [("Total students", roles.get("Student", 0), "students"),
+                   ("Total teachers", roles.get("Teacher", 0), "teacher"),
+                   ("Academic records", record_count, "record"),
+                   ("Allowed decisions", decisions.get("Allowed", 0), "check"),
+                   ("Denied decisions", decisions.get("Denied", 0), "lock")]
         return render_workspace("dashboards/admin.html", metrics=metrics, rows=record_rows(limit=5),
                                 logs=recent_activity(), permissions=permissions, active="dashboard")
 
@@ -70,9 +73,11 @@ def role_dashboard(role):
         with_records = db.session.scalar(db.select(db.func.count()).select_from(
             scope.where(User.student_record.has()).subquery()
         ))
-        metrics = [("Assigned students", assigned), ("With records", with_records),
-                   ("Awaiting records", assigned - with_records)]
-        return render_workspace("dashboards/teacher.html", listing=student_listing(scope), metrics=metrics,
+        metrics = [("Assigned students", assigned, "students"), ("With records", with_records, "record"),
+                   ("Awaiting records", assigned - with_records, "clock")]
+        listing = student_listing(scope)
+        return render_workspace("dashboards/teacher.html", listing=listing, metrics=metrics,
+                                listing_url=listing_link("main.role_dashboard", listing, role="teacher"),
                                 assigned=assigned, permissions=permissions, active="dashboard")
 
     rows = record_rows(limit=1)

@@ -1,0 +1,16 @@
+{% if logs %}
+<ul class="activity-feed">
+{% for log in logs %}
+    <li>
+        <div class="feed-summary">
+            <strong>{{ log.action|audit_action_label }}</strong>
+            <span class="status {{ 'status-success' if log.decision == 'Allowed' else 'status-error' }}">{{ log.decision }}</span>
+        </div>
+        <p class="secondary-label">{{ log.actor.display_name if log.actor else "Anonymous" }}{% if log.actor_role %} · {{ log.actor_role }}{% endif %}</p>
+        <time class="technical secondary-label" datetime="{{ log.timestamp.isoformat() }}">{{ log.timestamp.strftime("%Y-%m-%d %H:%M:%S") }} UTC</time>
+    </li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="empty-copy">No access decisions have been recorded yet.</p>
+{% endif %}

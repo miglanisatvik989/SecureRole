@@ -1,8 +1,13 @@
-{% from "_ui.html" import mark %}
+{% from "_ui.html" import avatar, mark %}
 <section class="card profile-card" aria-labelledby="record-student">
     <div class="section-heading">
-        <div><h2 id="record-student">{{ record.student.display_name }}</h2>
-            <p class="secondary-label">@{{ record.student.username }}</p></div>
+        <div class="profile-identity">
+            {{ avatar(record.student.display_name, "avatar-large") }}
+            <div><h2 id="record-student">{{ record.student.display_name }}</h2>
+                <span class="role-badge">Student</span>
+                <p class="secondary-label">@{{ record.student.username }}</p>
+            </div>
+        </div>
         <div class="profile-mark"><span class="secondary-label">Marks</span><div class="metric-value">{{ mark(record.marks) }}</div></div>
     </div>
     <meter class="marks-meter" min="0" max="100" value="{{ record.marks }}" aria-label="Academic marks out of 100">{{ record.marks }} out of 100</meter>

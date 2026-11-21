@@ -1,26 +1,29 @@
-{% from "_ui.html" import mark %}
+{% from "_ui.html" import avatar, mark %}
 {% if listing.rows %}
 <div class="table-scroll" tabindex="0" role="region" aria-label="{{ 'Student records table' if show_teacher else 'Assigned students table' }}">
     <table class="data-table">
-        <thead><tr><th scope="col">Student</th><th scope="col">Course</th><th scope="col">Marks</th>
+        <thead><tr><th scope="col">Student</th><th scope="col">Course</th><th scope="col" class="numeric">Marks</th>
             {% if show_teacher %}<th scope="col">Assigned teacher</th>{% endif %}
             <th scope="col">Actions</th></tr></thead>
         <tbody>
         {% for student in listing.rows %}
             {% set record = student.student_record %}
             <tr>
-                <th scope="row">{{ student.display_name }}<br><span class="secondary-label">@{{ student.username }}</span></th>
+                <th scope="row"><div class="table-person">
+                    {{ avatar(student.display_name, "avatar-small") }}
+                    <div>{{ student.display_name }}<br><span class="secondary-label">@{{ student.username }}</span></div>
+                </div></th>
                 <td>{% if record %}{{ record.course }}{% else %}<span class="status status-warning">Awaiting record</span>{% endif %}</td>
-                <td>{{ mark(record.marks) if record else "—" }}</td>
+                <td class="numeric">{{ mark(record.marks) if record else "—" }}</td>
                 {% if show_teacher %}
                 <td>{{ student.assigned_teacher.display_name if student.assigned_teacher else "Unassigned" }}</td>
                 {% endif %}
                 <td><div class="table-actions">
                     {% if record %}
-                        <a href="{{ url_for('records.detail', record_id=record.id) }}" aria-label="View record for {{ student.display_name }}">View</a>
-                        <a href="{{ url_for('records.edit', record_id=record.id) }}" aria-label="Edit record for {{ student.display_name }}">Edit</a>
+                        <a href="{{ url_for('records.detail', record_id=record.id, return_to=listing_url) }}" aria-label="View record for {{ student.display_name }}">View</a>
+                        <a href="{{ url_for('records.edit', record_id=record.id, return_to=listing_url) }}" aria-label="Edit record for {{ student.display_name }}">Edit</a>
                     {% else %}
-                        <a href="{{ url_for('records.create', student_id=student.id) }}" aria-label="Add record for {{ student.display_name }}">Add record</a>
+                        <a href="{{ url_for('records.create', student_id=student.id, return_to=listing_url) }}" aria-label="Add record for {{ student.display_name }}">Add record</a>
                     {% endif %}
                 </div></td>
             </tr>

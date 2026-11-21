@@ -40,3 +40,39 @@ for (const form of document.querySelectorAll("[data-submission-feedback]")) {
         status.textContent = "";
     });
 }
+
+const menu = document.querySelector("[data-nav-toggle]");
+
+if (menu) {
+    const sidebar = menu.closest(".sidebar");
+    const content = document.getElementById(menu.getAttribute("aria-controls"));
+    const compact = window.matchMedia("(max-width: 768px)");
+
+    function setExpanded(expanded) {
+        if (!expanded && content.contains(document.activeElement)) menu.focus();
+        content.hidden = !expanded;
+        menu.setAttribute("aria-expanded", String(expanded));
+    }
+
+    function syncNavigation() {
+        if (compact.matches) {
+            menu.hidden = false;
+            setExpanded(false);
+        } else {
+            if (document.activeElement === menu) sidebar.querySelector(".brand").focus();
+            menu.hidden = true;
+            setExpanded(true);
+        }
+    }
+
+    menu.addEventListener("click", () => setExpanded(content.hidden));
+    sidebar.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && compact.matches && !content.hidden) {
+            event.preventDefault();
+            setExpanded(false);
+            menu.focus();
+        }
+    });
+    compact.addEventListener("change", syncNavigation);
+    syncNavigation();
+}

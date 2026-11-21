@@ -7,7 +7,7 @@
     {% if students %}
     <ul class="choice-list">{% for student in students %}
         <li><div><strong>{{ student.display_name }}</strong><br><span class="secondary-label">@{{ student.username }}</span></div>
-        <a class="button secondary" href="{{ url_for('records.create', student_id=student.id) }}" aria-label="Add record for {{ student.display_name }}">Add record</a></li>
+        <a class="button secondary" href="{{ url_for('records.create', student_id=student.id, return_to=return_to) }}" aria-label="Add record for {{ student.display_name }}">Add record</a></li>
     {% endfor %}</ul>
     {% else %}<p class="empty-copy">All current student accounts already have an academic record, or there are no student accounts yet.</p>{% endif %}
 </section>

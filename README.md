@@ -129,7 +129,9 @@ not merge independent audit chains.
   or course, and filter by Teacher, course or availability. The **Users**
   list supports name, username or email search and role and Teacher filters.
   Sort and filter choices carry across pages. **Clear filters** restores the
-  default list.
+  default list. Record and account forms retain the listing context in their
+  breadcrumbs and return links. On mobile, open **Menu** to reach navigation,
+  profile and sign-out controls.
 - **Access activity.** Admins can search, filter and page through **Access logs**.
   **Download CSV report** exports all matching recorded events from the
   current snapshot. The export excludes authentication material.
@@ -160,7 +162,7 @@ See [authorization](docs/authorization.md) and [security analysis](docs/security
 python -m pytest -q
 ```
 
-The latest run passed **182 tests in 75.88 seconds**, including all
+The latest run passed **187 tests in 78.78 seconds**, including all
 **T1–T11** authorization acceptance cases. Tests use isolated temporary
 databases. See [test results](docs/test-results.md) for the measured
 environment, fresh-install checks and individual acceptance outcomes.

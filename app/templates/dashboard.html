@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import brand, icon, nav_link %}
+{% from "_ui.html" import avatar, brand, icon, nav_link %}
 {% set role = current_user.role.name %}
 {% set pages = {
     "Admin": ("Overview", "Manage users, student records and access activity.", "overview"),
@@ -10,31 +10,40 @@
 {% block title %}{{ page_title or (role ~ " dashboard") }} | SecureRole{% endblock %}
 {% block layout_class %}dashboard-layout{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
+<aside class="sidebar" aria-label="Workspace">
     {{ brand() }}
-    <nav class="workspace-nav" aria-label="Dashboard">
-        {{ nav_link(url_for('main.role_dashboard', role=role|lower), heading, page_icon, active == "dashboard" or (role != "Admin" and active == "records")) }}
-        {% if role == "Admin" %}
-            {{ nav_link(url_for('records.index'), "Student records", "record", active == "records") }}
-            {{ nav_link(url_for('accounts.index'), "Users", "students", active == "users") }}
-            {{ nav_link(url_for('activity.index'), "Access logs", "activity", active == "activity") }}
-        {% endif %}
-        {{ nav_link(url_for('sessions.index'), "Active sessions", "shield", active == "sessions") }}
-    </nav>
-    <div class="sidebar-account">
-        <div class="profile">
-            <span class="avatar" aria-hidden="true">{{ current_user.display_name[:1]|upper }}</span>
-            <div class="profile-details">
-                <p class="profile-name">{{ current_user.display_name }}</p>
-                <span class="role-badge">{{ role }}</span>
+    <button class="button secondary sidebar-toggle" type="button" data-nav-toggle
+            aria-controls="sidebar-content" aria-expanded="true" hidden>{{ icon("menu") }} Menu</button>
+    <p class="mobile-location">{{ page_title or heading }}</p>
+    <div id="sidebar-content" class="sidebar-body">
+        <nav class="workspace-nav" aria-label="Dashboard">
+            <div class="nav-group">
+                {{ nav_link(url_for('main.role_dashboard', role=role|lower), heading, page_icon, active == "dashboard" or (role != "Admin" and active == "records")) }}
+                {% if role == "Admin" %}
+                    {{ nav_link(url_for('records.index'), "Student records", "record", active == "records") }}
+                    {{ nav_link(url_for('accounts.index'), "Users", "students", active == "users") }}
+                    {{ nav_link(url_for('activity.index'), "Access logs", "activity", active == "activity") }}
+                {% endif %}
             </div>
+            <div class="nav-group nav-account">
+                {{ nav_link(url_for('sessions.index'), "Active sessions", "shield", active == "sessions") }}
+            </div>
+        </nav>
+        <div class="sidebar-account">
+            <div class="profile">
+                {{ avatar(current_user.display_name) }}
+                <div class="profile-details">
+                    <p class="profile-name">{{ current_user.display_name }}</p>
+                    <span class="role-badge">{{ role }}</span>
+                </div>
+            </div>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                {{ logout_form.csrf_token(id="logout-csrf") }}
+                <button class="button secondary sign-out" type="submit">
+                    {{ icon("sign-out") }} {{ logout_form.submit.label.text }}
+                </button>
+            </form>
         </div>
-        <form method="post" action="{{ url_for('auth.logout') }}">
-            {{ logout_form.csrf_token(id="logout-csrf") }}
-            <button class="button secondary sign-out" type="submit">
-                {{ icon("sign-out") }} {{ logout_form.submit.label.text }}
-            </button>
-        </form>
     </div>
 </aside>
 {% endblock %}
@@ -42,8 +51,16 @@
 {% block content %}
 <div class="dashboard-content">
     {% for category, message in get_flashed_messages(with_categories=true) %}
-        <p class="notice workspace-notice {{ 'success-notice' if category == 'success' }}" role="status">{{ message }}</p>
+        <p class="notice workspace-notice {{ 'success-notice' if category == 'success' else 'warning-notice' if category == 'warning' else 'error-banner' if category in ['error', 'danger'] }}" role="{{ 'alert' if category in ['error', 'danger'] else 'status' }}">{{ message }}</p>
     {% endfor %}
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+        {% for label, href in breadcrumbs %}<li><a href="{{ href }}">{{ label }}</a></li>{% endfor %}
+        <li><span aria-current="page">{{ page_title }}</span></li>
+        </ol>
+    </nav>
+    {% endif %}
     {% block workspace %}{% endblock %}
     {% if permissions is defined %}{% include "_permissions.html" %}{% endif %}
 </div>

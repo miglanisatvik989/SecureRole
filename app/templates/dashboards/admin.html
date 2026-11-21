@@ -6,7 +6,7 @@
     <a class="button primary" href="{{ url_for('records.pick_student') }}">Add record</a>
 </header>
 {{ metrics_grid(metrics) }}
-<div class="workspace-stack">
+<div class="workspace-stack overview-sections">
     <section class="card content-card" aria-labelledby="recent-records">
         <div class="section-heading"><h2 id="recent-records">Recent student records</h2>
             <a href="{{ url_for('records.index') }}">View all records</a>
@@ -17,7 +17,7 @@
         <div class="section-heading"><h2 id="recent-activity">Recent access activity</h2>
             <a href="{{ url_for('activity.index') }}">View access logs</a>
         </div>
-        {% include "_activity_table.html" %}
+        {% include "_activity_feed.html" %}
     </section>
 </div>
 {% endblock %}

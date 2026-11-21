@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from app.forms import DeleteRecordForm, RecordForm
 from app.listing import student_listing
+from app.navigation import listing_link, listing_return
 from app.models import StudentRecord, User, db
 from app.rbac import Action, is_allowed, require_permission, scoped_records, scoped_students
 from app.workspace import render_workspace, save_changes
@@ -26,15 +27,25 @@ def scoped_record(record_id, action):
 
 def record_return_url():
     if current_user.role.name == "Admin":
-        return url_for("records.index")
-    return url_for("main.dashboard")
+        return listing_return("records.index")
+    return listing_return("main.role_dashboard", role=current_user.role.name.lower())
+
+
+def record_breadcrumbs(record=None):
+    label = {"Admin": "Student records", "Teacher": "My students", "Student": "My academic record"}
+    back = record_return_url()
+    crumbs = [(label[current_user.role.name], back)]
+    if record is not None:
+        crumbs.append(("Academic record", url_for("records.detail", record_id=record.id, return_to=back)))
+    return crumbs
 
 
 @records.get("/records")
 def index():
     require_permission(Action.LIST_RECORDS)
     listing = student_listing(scoped_students(current_user.id), admin=True)
-    return render_workspace("records/list.html", listing=listing, active="records")
+    return render_workspace("records/list.html", listing=listing, listing_url=listing_link("records.index", listing),
+                            active="records")
 
 
 @records.get("/records/new")
@@ -42,7 +53,8 @@ def pick_student():
     require_permission(Action.LIST_RECORDS)
     students = db.session.scalars(scoped_students(current_user.id, Action.CREATE_RECORD)
                                   .where(~User.student_record.has()).order_by(User.display_name, User.id)).all()
-    return render_workspace("records/pick.html", students=students, active="records")
+    return render_workspace("records/pick.html", students=students, return_to=record_return_url(),
+                            breadcrumbs=record_breadcrumbs(), active="records")
 
 
 @records.get("/records/<int:record_id>")
@@ -54,7 +66,8 @@ def detail(record_id):
     return render_workspace("records/detail.html", record=record, active="records",
                             can_edit=is_allowed(current_user.id, Action.EDIT_RECORD, record_id=record_id),
                             can_delete=is_allowed(current_user.id, Action.DELETE_RECORD, record_id=record_id),
-                            delete_form=DeleteRecordForm())
+                            delete_form=DeleteRecordForm(), return_to=record_return_url(),
+                            breadcrumbs=record_breadcrumbs())
 
 
 @records.route("/students/<int:student_id>/record/new", methods=["GET", "POST"])
@@ -87,8 +100,8 @@ def create(student_id):
     if request.method == "GET" and student.student_record is not None:
         error, status = "This student already has an academic record.", 409
     return render_workspace("workspace_form.html", title="Add academic record", subject=student.display_name,
-                            form=form, fields=(form.course, form.marks), error=error, status=status,
-                            cancel=record_return_url(), active="records")
+                            form=form, groups=[("Academic details", (form.course, form.marks))], error=error, status=status,
+                            cancel=record_return_url(), breadcrumbs=record_breadcrumbs(), active="records")
 
 
 @records.route("/records/<int:record_id>/edit", methods=["GET", "POST"])
@@ -112,7 +125,7 @@ def edit(record_id):
             error, status = save_changes(change)
             if error is None:
                 flash("Academic record updated.", "success")
-                return redirect(url_for("records.detail", record_id=record_id), code=303)
+                return redirect(url_for("records.detail", record_id=record_id, return_to=record_return_url()), code=303)
         else:
             require_permission(Action.EDIT_RECORD, record_id=record_id, atomic=True)
             db.session.rollback()
@@ -121,9 +134,11 @@ def edit(record_id):
         if record is None:
             require_permission(Action.EDIT_RECORD, record_id=record_id)
             abort(403)
+    crumbs = record_breadcrumbs(record)
     return render_workspace("workspace_form.html", title="Edit academic record", subject=record.student.display_name,
-                            form=form, fields=(form.course, form.marks), error=error, status=status,
-                            cancel=url_for("records.detail", record_id=record_id), active="records")
+                            form=form, groups=[("Academic details", (form.course, form.marks))], error=error, status=status,
+                            cancel=crumbs[-1][1], breadcrumbs=crumbs,
+                            active="records")
 
 
 @records.route("/records/<int:record_id>/delete", methods=["GET", "POST"])
@@ -138,7 +153,7 @@ def delete(record_id):
         error, status = save_changes(change)
         if error is None:
             flash("Academic record deleted.", "success")
-            return redirect(url_for("records.index"), code=303)
+            return redirect(record_return_url(), code=303)
     else:
         require_permission(Action.DELETE_RECORD, record_id=record_id)
     record = scoped_record(record_id, Action.DELETE_RECORD) if current_user.is_authenticated else None
@@ -146,4 +161,5 @@ def delete(record_id):
         require_permission(Action.DELETE_RECORD, record_id=record_id)
         abort(403)
     return render_workspace("records/delete.html", record=record, form=form, error=error,
-                            status=status, active="records")
+                            status=status, return_to=record_return_url(), breadcrumbs=record_breadcrumbs(record),
+                            active="records")

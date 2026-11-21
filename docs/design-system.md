@@ -1,6 +1,6 @@
 # SecureRole design system
 
-Phase 4.1 uses light surfaces, clear typography and a restrained blue accent.
+SecureRole uses light surfaces, clear typography and a restrained blue accent.
 The application stylesheet defines the shared tokens and components in
 [`style.css`](../app/static/css/style.css).
 
@@ -85,11 +85,11 @@ The confirmation route provides the equivalent flow when dialogs are unavailable
 ## Responsive layout
 
 Center the login card with a maximum width of 480 px and allow it to shrink
-within the viewport. The desktop dashboard has a 240 px sidebar and a fluid
-content column. At 768 px and below, the sidebar becomes a stacked navigation
-and profile bar above the page content. Let names and labels wrap, and keep
-controls large enough for touch. Templates preserve the same navigation and
-forms at every viewport size.
+within the viewport. The desktop dashboard has a sticky 240 px sidebar with a
+bottom account area and a fluid content column. At 768 px and below, the
+sidebar becomes a compact header with a disclosure button and current-page
+text. The disclosure exposes the same navigation and profile controls. Let
+names and labels wrap, and keep controls large enough for touch.
 
 ## Phase 7.3 components
 
@@ -107,3 +107,29 @@ duplicate submits while navigation is pending.
 
 See the [accessibility review](accessibility-review.md) for the checks
 performed and their limits.
+
+## Final visual baseline
+
+Page headers pair a title and short description with the primary action.
+Nested record and account pages add breadcrumbs. Return links keep recognized
+search, filter and page selections for the expected listing. The mobile menu
+starts collapsed when scripting is available. Enter opens it, Tab continues
+to the current navigation group, and Escape returns focus to the menu button.
+
+Metric cards keep decorative outline icons outside the definition list for
+their label and value. Numeric table cells align to the right and retain
+tabular numerals. Taller desktop lists use focusable scroll regions with
+sticky column headers. At 1440 px and wider, the Admin overview gives
+recent records the wider column and puts the activity feed alongside.
+Compact widths stack the sections, with table scrolling contained in each card.
+
+Student and Teacher identities use decorative initials alongside visible names.
+The score and native meter share the Student profile. The permission cards
+summarize actual policy scopes with concise text. The sign-in password control
+sits inside the input area and keeps its Show password and Hide password names.
+
+Related form controls share fieldsets and legends. Password guidance stays
+visible beside the field, and errors add a separate announcement and focusable
+field association. The audit status card describes local verification of the
+full journal. The visible Allowed and Denied totals describe the selected
+filters, and the CSV continues to report those matching recorded events.

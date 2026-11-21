@@ -5,7 +5,7 @@
 {% block workspace %}
 <header class="workspace-heading">
     {{ page_heading(page_title, "Review student records and find accounts awaiting a record.") }}
-    <a class="button primary" href="{{ url_for('records.pick_student') }}">Add record</a>
+    <a class="button primary" href="{{ url_for('records.pick_student', return_to=listing_url) }}">Add record</a>
 </header>
 <section class="card content-card" aria-label="Student records">
     {{ filters(listing, url_for('records.index'), "Name, username or course") }}

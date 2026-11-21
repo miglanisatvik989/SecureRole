@@ -5,8 +5,8 @@
 <header class="workspace-heading">
     {{ page_heading(page_title) }}
     <div class="toolbar">
-        {% if can_edit %}<a class="button secondary" href="{{ url_for('records.edit', record_id=record.id) }}">Edit record</a>{% endif %}
-        {% if can_delete %}<a class="button danger" href="{{ url_for('records.delete', record_id=record.id) }}" data-confirm="delete-record">Delete record</a>{% endif %}
+        {% if can_edit %}<a class="button secondary" href="{{ url_for('records.edit', record_id=record.id, return_to=return_to) }}">Edit record</a>{% endif %}
+        {% if can_delete %}<a class="button danger" href="{{ url_for('records.delete', record_id=record.id, return_to=return_to) }}" data-confirm="delete-record">Delete record</a>{% endif %}
     </div>
 </header>
 {% include "records/_profile.html" %}
@@ -16,7 +16,7 @@
     <p class="intro" id="delete-description">The academic record for {{ record.student.display_name }} will be permanently removed.</p>
     <div class="toolbar">
         <form method="dialog"><button type="submit" class="button secondary" autofocus>Cancel</button></form>
-        <form method="post" data-submission-feedback action="{{ url_for('records.delete', record_id=record.id) }}">
+        <form method="post" data-submission-feedback action="{{ url_for('records.delete', record_id=record.id, return_to=return_to) }}">
             <p class="submission-status secondary-label" role="status"></p>
             {{ delete_form.hidden_tag() }}{{ delete_form.submit(class_="button danger") }}
         </form>

@@ -5,7 +5,7 @@
         <h2 id="permissions-title">{{ icon("shield") }} My permissions</h2>
         <span class="role-badge">{{ role }}</span>
     </div>
-    <p class="muted">Teachers can work with records only for assigned students. Students can view only their own record.</p>
+    <p class="muted">{% if role == "Teacher" %}Your record access follows your student assignments.{% elif role == "Student" %}You can view the record linked to your own account.{% else %}Your access covers all academic records and administration.{% endif %}</p>
     <dl class="permissions-list">
         {% for label, scope in permissions %}
         <div><dt>{{ label }}</dt><dd><span class="status {{ 'status-error' if not scope else 'status-success' if scope in ['all', 'allowed'] else 'status-scoped' }}">{{ scope_labels.get(scope, "Restricted") }}</span></dd></div>

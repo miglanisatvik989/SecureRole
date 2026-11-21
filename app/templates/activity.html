@@ -2,11 +2,21 @@
 {% from "_ui.html" import page_heading %}
 {% set page_title = "Access logs" %}
 {% block workspace %}
-{{ page_heading(page_title, "Review authorization decisions and the resources they affect.") }}
-<p class="notice workspace-notice {{ 'success-notice' if integrity.valid else 'error-banner' }}" role="status">
-    {% if integrity.valid %}Audit chain verified locally · {{ integrity.count }} entries checked.
-    {% else %}Audit integrity check failed. {{ integrity.message }}{% endif %}
-</p>
+<header class="workspace-heading">
+    {{ page_heading(page_title, "Review authorization decisions and the resources they affect.") }}
+    {% if integrity.valid %}
+        <a class="button secondary" href="{{ url_for('activity.export', decision=decision, action=action, q=search, snapshot=snapshot) }}">Download CSV report</a>
+    {% endif %}
+</header>
+<section class="card integrity-card" aria-labelledby="integrity-title">
+    <h2 id="integrity-title">Audit integrity</h2>
+    {% if integrity.valid %}
+        <p role="status">Audit chain verified locally · {{ integrity.count }} entries checked.</p>
+        <p class="secondary-label">Local verification checks the full journal. The CSV report contains recorded events matching the current filters.</p>
+    {% else %}
+        <p class="error-banner" role="alert">Audit integrity check failed. {{ integrity.message }}</p>
+    {% endif %}
+</section>
 {% if integrity.valid %}
 <section class="card content-card" aria-label="Access logs">
     <form method="get" class="filter-form">
@@ -18,17 +28,17 @@
             </select></div>
         <div class="field"><label for="activity-action">Action</label>
             <select id="activity-action" name="action"><option value="">All actions</option>
-                {% for value in actions %}<option{% if value == action %} selected{% endif %}>{{ value }}</option>{% endfor %}
+                {% for value in actions %}<option value="{{ value }}"{% if value == action %} selected{% endif %}>{{ value|audit_action_label }}</option>{% endfor %}
             </select></div>
         <div class="toolbar">
             <button class="button primary" type="submit">Apply filters</button>
             <a class="button secondary" href="{{ url_for('activity.index') }}">Clear filters</a>
         </div>
     </form>
-    <div class="section-heading">
-        <p class="muted">CSV report of recorded audit events matching these filters.</p>
-        <a class="button secondary" href="{{ url_for('activity.export', decision=decision, action=action, q=search, snapshot=snapshot) }}">Download CSV report</a>
-    </div>
+    <dl class="decision-totals" aria-label="Matching decisions">
+        <div><dt><span class="status status-success">Allowed</span></dt><dd>{{ allowed }}</dd></div>
+        <div><dt><span class="status status-error">Denied</span></dt><dd>{{ denied }}</dd></div>
+    </dl>
     {% include "_activity_table.html" %}
     <nav class="pagination" aria-label="Access log pages">
         <p class="secondary-label">{{ total }} {{ "result" if total == 1 else "results" }} · Page {{ page }} of {{ last_page }}</p>

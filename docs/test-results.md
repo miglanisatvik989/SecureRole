@@ -152,3 +152,31 @@ submission and success feedback, keyboard interaction and table scrolling.
 The [accessibility review](accessibility-review.md) records the 18 axe scans
 and complementary manual checks. Browser writes went to a temporary
 SQLite copy. The canonical database's SHA-256 was unchanged.
+
+## Phase 7.4 final visual baseline
+
+On 2026-11-21 UTC, the complete suite ran on Linux x86_64 using Python
+3.14.4 and isolated temporary SQLite databases.
+
+| Executed | Passed | Failed | Skipped | Pass rate | Duration |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 187 | 187 | 0 | 0 | 100% | 78.78 s |
+
+All 182 preceding tests and T1–T11 passed. Five new
+[regression cases](../tests/test_visual_polish.py) cover sidebar markup
+and role navigation, return context for record and account forms,
+rejection of unrelated return destinations, and preservation of raw
+CSV values when the activity UI uses human-readable labels.
+
+Chromium exercised all three role dashboards at 1920, 1440, 1024, 768,
+390 and 320 px. The workflow checks covered menu keyboard behavior and
+focus return, sticky desktop navigation and table headers, split and
+stacked overview sections, filtered return paths, form feedback, the
+destructive-action dialog, filtered CSV download, record permissions
+and the Student profile. The final 27 Axe scans reported zero violations.
+See [accessibility results](accessibility-review.md#phase-74-visual-baseline)
+for the scroll-region contrast follow-up.
+
+Browser writes ran against a temporary database copy. The canonical
+database hash was unchanged, and read-only checks confirmed 139 accounts,
+111 records, no foreign-key violations, and a valid 73-entry audit chain.

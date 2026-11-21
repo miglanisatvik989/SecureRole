@@ -5,6 +5,7 @@ from flask_login import current_user
 
 from app.forms import AccountForm, NewAccountForm, ResetPasswordForm
 from app.listing import account_listing
+from app.navigation import listing_link, listing_return
 from app.models import Role, User, db
 from app.rbac import Action, require_permission
 from app.workspace import render_workspace, save_changes
@@ -35,7 +36,7 @@ def configure_choices(form):
 def index():
     require_permission(Action.MANAGE_USERS)
     listing = account_listing()
-    return render_workspace("accounts/list.html", listing=listing, active="users")
+    return render_workspace("accounts/list.html", listing=listing, listing_url=listing_link("accounts.index", listing), active="users")
 
 
 @accounts.route("/users/new", methods=["GET", "POST"])
@@ -93,7 +94,7 @@ def edit(user_id=None):
         error, status = save_changes(change)
         if error is None:
             flash("Account created." if creating else "Account updated.", "success")
-            return redirect(url_for("main.dashboard") if user_id == current_user.id else url_for("accounts.index"),
+            return redirect(url_for("main.dashboard") if user_id == current_user.id else listing_return("accounts.index"),
                             code=303)
         if status >= 500 and not validated:
             # An error may occur before the transaction reaches the authorization guard.
@@ -101,12 +102,14 @@ def edit(user_id=None):
             db.session.rollback()
             configure_choices(form)
 
-    fields = [form.display_name, form.username, form.email, form.role_id, form.assigned_teacher_id]
+    groups = [("Account details", (form.display_name, form.username, form.email)),
+              ("Access and assignment", (form.role_id, form.assigned_teacher_id))]
     if creating:
-        fields.append(form.password)
+        groups.append(("Password", (form.password,)))
+    back = listing_return("accounts.index")
     return render_workspace("workspace_form.html", title="Create account" if creating else "Edit account",
-                            form=form, fields=fields, error=error, status=status, active="users",
-                            cancel=url_for("accounts.index"))
+                            form=form, groups=groups, error=error, status=status, active="users",
+                            cancel=back, breadcrumbs=[("Users", back)])
 
 
 @accounts.route("/users/<int:user_id>/password", methods=["GET", "POST"])
@@ -121,7 +124,7 @@ def reset_password(user_id):
         error, status = save_changes(change)
         if error is None:
             flash("Password reset.", "success")
-            return redirect(url_for("accounts.index"), code=303)
+            return redirect(listing_return("accounts.index"), code=303)
     if request.method == "GET":
         require_permission(Action.MANAGE_USERS)
     else:
@@ -129,6 +132,7 @@ def reset_password(user_id):
         db.session.rollback()
         status = status if error else 400
     user = user_by_id(user_id)
+    back = listing_return("accounts.index")
     return render_workspace("workspace_form.html", title="Reset password", subject=user.display_name, form=form,
-                            fields=(form.password,), error=error, status=status, active="users",
-                            cancel=url_for("accounts.index"))
+                            groups=[("Password", (form.password,))], error=error, status=status, active="users",
+                            cancel=back, breadcrumbs=[("Users", back)])

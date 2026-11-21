@@ -5,7 +5,7 @@
 {% block workspace %}
 <header class="workspace-heading">
     {{ page_heading(page_title, "Manage accounts, roles, teacher assignments and passwords.") }}
-    <a class="button primary" href="{{ url_for('accounts.edit') }}">Create account</a>
+    <a class="button primary" href="{{ url_for('accounts.edit', return_to=listing_url) }}">Create account</a>
 </header>
 <section class="card content-card" aria-label="User accounts">
     {{ filters(listing, url_for('accounts.index'), "Name, username or email") }}
@@ -19,8 +19,8 @@
                 <td>{{ user.email or "—" }}</td><td><span class="role-badge">{{ user.role.name }}</span></td>
                 <td>{{ user.assigned_teacher.display_name if user.assigned_teacher else "—" }}</td>
                 <td><div class="table-actions">
-                    <a href="{{ url_for('accounts.edit', user_id=user.id) }}" aria-label="Edit account for {{ user.display_name }}">Edit</a>
-                    <a href="{{ url_for('accounts.reset_password', user_id=user.id) }}" aria-label="Reset password for {{ user.display_name }}">Reset password</a>
+                    <a href="{{ url_for('accounts.edit', user_id=user.id, return_to=listing_url) }}" aria-label="Edit account for {{ user.display_name }}">Edit</a>
+                    <a href="{{ url_for('accounts.reset_password', user_id=user.id, return_to=listing_url) }}" aria-label="Reset password for {{ user.display_name }}">Reset password</a>
                 </div></td>
             </tr>{% endfor %}</tbody>
         </table>

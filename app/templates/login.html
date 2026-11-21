@@ -2,7 +2,7 @@
 {% block title %}Sign in | SecureRole{% endblock %}
 {% from "_ui.html" import brand, icon %}
 {% block content %}
-<section class="card login-card" aria-labelledby="login-title">
+<section class="card login-card sign-in-card" aria-labelledby="login-title">
     {{ brand() }}
     <header class="login-heading">
         <h1 id="login-title">Welcome to SecureRole</h1>
@@ -10,13 +10,13 @@
     </header>
     {% for message in get_flashed_messages() %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
     {% if error %}<p class="error-banner" role="alert">{{ error }}</p>{% endif %}
-    <form method="post" class="login-form">
+    <form method="post" class="login-form" data-submission-feedback>
         {{ form.hidden_tag() }}
         <div class="field">
             {{ form.username.label }}
             {% if form.username.errors %}
                 {{ form.username(autocomplete="username", autocapitalize="none", spellcheck="false", aria_invalid="true", aria_describedby="username-errors") }}
-                <p class="field-error" id="username-errors">{{ form.username.errors | join(' ') }}</p>
+                <p class="field-error" role="alert" id="username-errors">{{ form.username.errors | join(' ') }}</p>
             {% else %}
                 {{ form.username(autocomplete="username", autocapitalize="none", spellcheck="false") }}
             {% endif %}
@@ -35,10 +35,11 @@
                 </button>
             </div>
             {% if form.password.errors %}
-                <p class="field-error" id="password-errors">{{ form.password.errors | join(' ') }}</p>
+                <p class="field-error" role="alert" id="password-errors">{{ form.password.errors | join(' ') }}</p>
             {% endif %}
         </div>
         {{ form.submit(class_="button primary") }}
+        <p class="submission-status secondary-label" role="status"></p>
     </form>
 </section>
 {% endblock %}
